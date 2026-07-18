@@ -3,7 +3,23 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
-import { FiCpu, FiSend, FiRefreshCw, FiTag, FiMessageCircle } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiCpu, FiSend, FiRefreshCw, FiZap, FiLayers, FiClock } from 'react-icons/fi';
+
+const priorityColor = {
+  High: 'bg-red-100 text-red-700',
+  Medium: 'bg-amber-100 text-amber-700',
+  Low: 'bg-green-100 text-green-700'
+};
+
+const categoryColor = {
+  Frontend: 'bg-indigo-100 text-indigo-700',
+  Backend: 'bg-violet-100 text-violet-700',
+  Auth: 'bg-pink-100 text-pink-700',
+  Database: 'bg-teal-100 text-teal-700',
+  Testing: 'bg-orange-100 text-orange-700',
+  DevOps: 'bg-slate-100 text-slate-700'
+};
 
 export default function AIPage() {
   const router = useRouter();
@@ -14,13 +30,11 @@ export default function AIPage() {
   const [length, setLength] = useState('medium');
   const [content, setContent] = useState(null);
   const [generating, setGenerating] = useState(false);
-  const [chatMessage, setChatMessage] = useState('');
-  const [chatHistory, setChatHistory] = useState([]);
-  const [chatLoading, setChatLoading] = useState(false);
-  const [classification, setClassification] = useState(null);
-  const [classifying, setClassifying] = useState(false);
 
-  // Check session
+  const [featureRequest, setFeatureRequest] = useState('');
+  const [story, setStory] = useState(null);
+  const [generatingStory, setGeneratingStory] = useState(false);
+
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -46,14 +60,8 @@ export default function AIPage() {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/generate-content`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          topic,
-          type: 'description',
-          length
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, type: 'description', length }),
       });
       const data = await response.json();
       setContent(data);
@@ -64,85 +72,57 @@ export default function AIPage() {
     }
   };
 
-  const handleChat = async () => {
-    if (!chatMessage) return;
-    setChatLoading(true);
+  const handleGenerateStory = async () => {
+    if (!featureRequest) return;
+    setGeneratingStory(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/chat`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/generate-story`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: chatMessage,
-          history: chatHistory
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ featureRequest }),
       });
       const data = await response.json();
-      setChatHistory([...chatHistory, { role: 'user', content: chatMessage }, { role: 'assistant', content: data.reply }]);
-      setChatMessage('');
+      setStory(data);
     } catch (error) {
-      console.error('Error in chat:', error);
+      console.error('Error generating story:', error);
     } finally {
-      setChatLoading(false);
-    }
-  };
-
-  const handleClassify = async () => {
-    if (!topic) return;
-    setClassifying(true);
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/classify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: topic,
-          description: content?.description || 'Sample description'
-        }),
-      });
-      const data = await response.json();
-      setClassification(data);
-    } catch (error) {
-      console.error('Error in classification:', error);
-    } finally {
-      setClassifying(false);
+      setGeneratingStory(false);
     }
   };
 
   if (loading) {
     return (
       <div className="pt-16 min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
 
-  if (!session) {
-    return null;
-  }
+  if (!session) return null;
 
   return (
     <div className="pt-16 min-h-screen bg-gray-50">
       <div className="container-custom py-8">
-        <div className="text-center mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8"
+        >
           <h1 className="text-3xl md:text-4xl font-bold">AI Tools</h1>
           <p className="text-gray-600 mt-2">Powered by artificial intelligence</p>
-        </div>
+        </motion.div>
 
         <div className="flex flex-wrap gap-2 mb-8 justify-center">
           {[
             { id: 'generate', label: 'Content Generator', icon: FiCpu },
-            { id: 'chat', label: 'Chat Assistant', icon: FiMessageCircle },
-            { id: 'classify', label: 'Classification', icon: FiTag }
+            { id: 'story', label: 'Story Generator', icon: FiLayers }
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-primary text-white'
+                  ? 'bg-indigo-600 text-white'
                   : 'bg-white text-gray-600 hover:bg-gray-100'
               }`}
             >
@@ -152,206 +132,190 @@ export default function AIPage() {
           ))}
         </div>
 
-        {/* Content Generator */}
-        {activeTab === 'generate' && (
-          <div className="bg-white rounded-xl shadow-md p-6 max-w-2xl mx-auto">
-            <h2 className="text-xl font-semibold mb-4">AI Content Generator</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Topic
-                </label>
-                <input
-                  type="text"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  placeholder="Enter a topic..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Length
-                </label>
-                <select
-                  value={length}
-                  onChange={(e) => setLength(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
+        <AnimatePresence mode="wait">
+          {/* Content Generator */}
+          {activeTab === 'generate' && (
+            <motion.div
+              key="generate"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25 }}
+              className="bg-white rounded-xl shadow-md p-6 max-w-2xl mx-auto"
+            >
+              <h2 className="text-xl font-semibold mb-4">AI Content Generator</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Topic</label>
+                  <input
+                    type="text"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    placeholder="Enter a topic..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Length</label>
+                  <select
+                    value={length}
+                    onChange={(e) => setLength(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  >
+                    <option value="short">Short</option>
+                    <option value="medium">Medium</option>
+                    <option value="long">Long</option>
+                  </select>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleGenerateContent}
+                  disabled={!topic || generating}
+                  className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
                 >
-                  <option value="short">Short</option>
-                  <option value="medium">Medium</option>
-                  <option value="long">Long</option>
-                </select>
+                  {generating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <span>Generating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FiSend className="w-5 h-5" />
+                      <span>Generate Content</span>
+                    </>
+                  )}
+                </motion.button>
               </div>
-              <button
-                onClick={handleGenerateContent}
-                disabled={!topic || generating}
-                className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-opacity-90 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
-              >
-                {generating ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span>Generating...</span>
-                  </>
-                ) : (
-                  <>
-                    <FiSend className="w-5 h-5" />
-                    <span>Generate Content</span>
-                  </>
-                )}
-              </button>
-            </div>
 
-            {content && (
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold">{content.title}</h3>
-                  <button
-                    onClick={handleGenerateContent}
-                    className="text-primary hover:text-primary/80"
+              <AnimatePresence>
+                {content && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-6 p-4 bg-gray-50 rounded-lg overflow-hidden"
                   >
-                    <FiRefreshCw className="w-4 h-4" />
-                  </button>
-                </div>
-                <p className="text-gray-600">{content.description}</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {content.tags?.map((tag, index) => (
-                    <span key={index} className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Chat Assistant */}
-        {activeTab === 'chat' && (
-          <div className="bg-white rounded-xl shadow-md p-6 max-w-2xl mx-auto">
-            <h2 className="text-xl font-semibold mb-4">AI Chat Assistant</h2>
-            
-            <div className="h-96 overflow-y-auto mb-4 p-4 bg-gray-50 rounded-lg">
-              {chatHistory.length === 0 ? (
-                <div className="text-center text-gray-500 py-12">
-                  <FiMessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Ask me anything about your projects!</p>
-                </div>
-              ) : (
-                chatHistory.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={`mb-4 ${msg.role === 'user' ? 'text-right' : ''}`}
-                  >
-                    <div
-                      className={`inline-block p-3 rounded-lg max-w-[80%] ${
-                        msg.role === 'user'
-                          ? 'bg-primary text-white'
-                          : 'bg-gray-200 text-gray-800'
-                      }`}
-                    >
-                      {msg.content}
+                    {content.reasoning && (
+                      <div className="flex items-start space-x-2 mb-3 text-xs text-violet-600 bg-violet-50 rounded-lg p-2">
+                        <FiZap className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                        <span className="italic">{content.reasoning}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-semibold">{content.title}</h3>
+                      <button onClick={handleGenerateContent} className="text-indigo-600 hover:text-indigo-800">
+                        <FiRefreshCw className="w-4 h-4" />
+                      </button>
                     </div>
-                  </div>
-                ))
-              )}
-              {chatLoading && (
-                <div className="text-left">
-                  <div className="inline-block p-3 bg-gray-200 rounded-lg">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                      <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                value={chatMessage}
-                onChange={(e) => setChatMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleChat()}
-                placeholder="Type your message..."
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
-                disabled={chatLoading}
-              />
-              <button
-                onClick={handleChat}
-                disabled={!chatMessage || chatLoading}
-                className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50"
-              >
-                Send
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Classification */}
-        {activeTab === 'classify' && (
-          <div className="bg-white rounded-xl shadow-md p-6 max-w-2xl mx-auto">
-            <h2 className="text-xl font-semibold mb-4">AI Auto Classification</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Item Title
-                </label>
-                <input
-                  type="text"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  placeholder="Enter item title..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
-                />
-              </div>
-              <button
-                onClick={handleClassify}
-                disabled={!topic || classifying}
-                className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-opacity-90 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
-              >
-                {classifying ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span>Classifying...</span>
-                  </>
-                ) : (
-                  <>
-                    <FiTag className="w-5 h-5" />
-                    <span>Classify Item</span>
-                  </>
-                )}
-              </button>
-            </div>
-
-            {classification && (
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-semibold mb-2">Classification Result</h3>
-                <div className="space-y-2">
-                  <div>
-                    <span className="text-sm text-gray-500">Category:</span>
-                    <div className="font-medium text-lg text-primary">{classification.category}</div>
-                  </div>
-                  <div>
-                    <span className="text-sm text-gray-500">Confidence:</span>
-                    <div className="font-medium">{(classification.confidence * 100).toFixed(0)}%</div>
-                  </div>
-                  <div>
-                    <span className="text-sm text-gray-500">Tags:</span>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {classification.tags.map((tag, index) => (
-                        <span key={index} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+                    <p className="text-gray-600">{content.description}</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {content.tags?.map((tag, index) => (
+                        <span key={index} className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs">
                           #{tag}
                         </span>
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
+
+          {/* Story Generator */}
+          {activeTab === 'story' && (
+            <motion.div
+              key="story"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25 }}
+              className="bg-white rounded-xl shadow-md p-6 max-w-3xl mx-auto"
+            >
+              <h2 className="text-xl font-semibold mb-1">AI Agile Story Generator</h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Type a feature request in one line. AI writes the user story and breaks it into tagged, prioritized tasks.
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Feature Request</label>
+                  <input
+                    type="text"
+                    value={featureRequest}
+                    onChange={(e) => setFeatureRequest(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleGenerateStory()}
+                    placeholder="e.g. Google Login feature banaite hবে"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  />
                 </div>
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleGenerateStory}
+                  disabled={!featureRequest || generatingStory}
+                  className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+                >
+                  {generatingStory ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <span>Breaking down feature...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FiLayers className="w-5 h-5" />
+                      <span>Generate Story & Tasks</span>
+                    </>
+                  )}
+                </motion.button>
               </div>
-            )}
-          </div>
-        )}
+
+              <AnimatePresence>
+                {story && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-6 overflow-hidden"
+                  >
+                    <div className="p-4 bg-violet-50 rounded-lg mb-4">
+                      <span className="text-xs font-semibold text-violet-600 uppercase tracking-wide">User Story</span>
+                      <p className="text-gray-800 mt-1">{story.userStory}</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Task Breakdown</span>
+                      {story.tasks?.map((task, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.08 }}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                        >
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-800">{task.title}</p>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${categoryColor[task.category] || 'bg-gray-100 text-gray-700'}`}>
+                                {task.category}
+                              </span>
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${priorityColor[task.priority] || 'bg-gray-100 text-gray-700'}`}>
+                                {task.priority}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-1 text-gray-500 text-sm flex-shrink-0 ml-3">
+                            <FiClock className="w-4 h-4" />
+                            <span>{task.estimatedHours}h</span>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

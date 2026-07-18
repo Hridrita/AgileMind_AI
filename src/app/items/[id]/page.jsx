@@ -5,30 +5,30 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { FiArrowLeft, FiMapPin, FiCalendar } from 'react-icons/fi';
+import { FiArrowLeft, FiUsers, FiGitBranch, FiCalendar, FiCheckCircle } from 'react-icons/fi';
 
-export default function ItemDetails() {
+export default function ProjectDetails() {
   const params = useParams();
   const router = useRouter();
-  const [item, setItem] = useState(null);
+  const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [relatedItems, setRelatedItems] = useState([]);
+  const [relatedProjects, setRelatedProjects] = useState([]);
 
   useEffect(() => {
-    if (params.id) fetchItemDetails();
+    if (params.id) fetchProjectDetails();
   }, [params.id]);
 
-  const fetchItemDetails = async () => {
+  const fetchProjectDetails = async () => {
     setLoading(true);
     try {
       const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/items/${params.id}`);
-      setItem(response.data);
+      setProject(response.data);
       const relatedResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/items`, {
-        params: { category: response.data.category, limit: 4 }
+        params: { framework: response.data.framework, limit: 4 }
       });
-      setRelatedItems(relatedResponse.data.items.filter(i => i._id !== params.id));
+      setRelatedProjects(relatedResponse.data.items.filter(i => i._id !== params.id));
     } catch (error) {
-      console.error('Error fetching item:', error);
+      console.error('Error fetching project:', error);
       router.push('/explore');
     } finally {
       setLoading(false);
@@ -43,10 +43,10 @@ export default function ItemDetails() {
     );
   }
 
-  if (!item) {
+  if (!project) {
     return (
       <div className="pt-16 min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Item not found</p>
+        <p className="text-gray-500">Project not found</p>
       </div>
     );
   }
@@ -68,57 +68,63 @@ export default function ItemDetails() {
           <div className="grid grid-cols-1 lg:grid-cols-2">
             <div className="relative h-64 lg:h-auto">
               <img
-                src={item.imageUrl || 'https://via.placeholder.com/600x400/4F46E5/FFFFFF?text=AgileMind'}
-                alt={item.title}
+                src={project.imageUrl || 'https://via.placeholder.com/600x400/4F46E5/FFFFFF?text=AgileMind'}
+                alt={project.title}
                 className="w-full h-full object-cover"
               />
             </div>
 
             <div className="p-6 lg:p-8">
               <div className="flex items-start justify-between mb-4">
-                <h1 className="text-2xl lg:text-3xl font-bold">{item.title}</h1>
+                <h1 className="text-2xl lg:text-3xl font-bold">{project.title}</h1>
                 <span className="px-3 py-1 bg-violet-100 text-violet-700 rounded-full text-sm font-medium">
-                  {item.category}
+                  {project.framework || 'Scrum'}
                 </span>
               </div>
 
               <div className="flex items-center space-x-4 mb-4">
                 <div className="flex items-center space-x-1">
-                  <span className="text-amber-400">★</span>
-                  <span className="font-medium">{item.rating || 4.5}</span>
+                  <FiCheckCircle className="text-green-500 w-4 h-4" />
+                  <span className="font-medium">{project.progress || 0}% Complete</span>
                 </div>
                 <div className="flex items-center space-x-1 text-gray-500">
-                  <FiMapPin className="w-4 h-4" />
-                  <span>{item.location || 'Online'}</span>
+                  <FiUsers className="w-4 h-4" />
+                  <span>{project.teamSize || 0} members</span>
                 </div>
                 <div className="flex items-center space-x-1 text-gray-500">
                   <FiCalendar className="w-4 h-4" />
-                  <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+                  <span>{new Date(project.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
 
-              <div className="text-3xl font-bold text-indigo-600 mb-4">${item.price}</div>
+              <div className="flex items-center space-x-4 mb-4 bg-indigo-50 rounded-lg p-3">
+                <div className="text-2xl font-bold text-indigo-600">{project.storyPoints || 0}</div>
+                <div className="text-sm text-gray-600">Total Story Points</div>
+                <div className="w-px h-8 bg-gray-300"></div>
+                <div className="text-2xl font-bold text-green-600">{project.completedTasks || 0}</div>
+                <div className="text-sm text-gray-600">Tasks Done</div>
+              </div>
 
-              <p className="text-gray-600 mb-6">{item.fullDescription || item.shortDescription}</p>
+              <p className="text-gray-600 mb-6">{project.fullDescription || project.shortDescription}</p>
 
               <div className="border-t pt-6">
-                <h3 className="font-semibold mb-3">Key Information</h3>
+                <h3 className="font-semibold mb-3">Project Information</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-sm text-gray-500">Category</span>
-                    <div className="font-medium">{item.category}</div>
+                    <span className="text-sm text-gray-500">Framework</span>
+                    <div className="font-medium">{project.framework || 'Scrum'}</div>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-500">Location</span>
-                    <div className="font-medium">{item.location || 'Online'}</div>
+                    <span className="text-sm text-gray-500">Team Size</span>
+                    <div className="font-medium">{project.teamSize || 0} members</div>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-500">Added</span>
-                    <div className="font-medium">{new Date(item.createdAt).toLocaleDateString()}</div>
+                    <span className="text-sm text-gray-500">Started</span>
+                    <div className="font-medium">{new Date(project.createdAt).toLocaleDateString()}</div>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-500">Rating</span>
-                    <div className="font-medium">{item.rating || 4.5} / 5</div>
+                    <span className="text-sm text-gray-500">Progress</span>
+                    <div className="font-medium">{project.progress || 0}%</div>
                   </div>
                 </div>
               </div>
@@ -126,11 +132,11 @@ export default function ItemDetails() {
           </div>
         </motion.div>
 
-        {relatedItems.length > 0 && (
+        {relatedProjects.length > 0 && (
           <div className="mt-12">
-            <h2 className="text-2xl font-bold mb-6">Related Items</h2>
+            <h2 className="text-2xl font-bold mb-6">Related Projects</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {relatedItems.map((related, i) => (
+              {relatedProjects.map((related, i) => (
                 <motion.div
                   key={related._id}
                   initial={{ opacity: 0, y: 20 }}
@@ -149,7 +155,7 @@ export default function ItemDetails() {
                       </div>
                       <div className="p-4">
                         <h3 className="font-semibold truncate">{related.title}</h3>
-                        <p className="text-indigo-600 font-bold">${related.price}</p>
+                        <p className="text-indigo-600 font-bold">{related.framework || 'Scrum'}</p>
                       </div>
                     </div>
                   </Link>

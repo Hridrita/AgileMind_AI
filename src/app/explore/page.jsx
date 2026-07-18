@@ -4,41 +4,41 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiSearch, FiMapPin, FiDollarSign } from 'react-icons/fi';
+import { FiSearch, FiUsers, FiGitBranch } from 'react-icons/fi';
 
 export default function Explore() {
-  const [items, setItems] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('all');
+  const [framework, setFramework] = useState('all');
   const [sort, setSort] = useState('newest');
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
+  const [minPoints, setMinPoints] = useState('');
+  const [maxPoints, setMaxPoints] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const categories = ['all', 'Technology', 'Business', 'Education', 'Health', 'Finance', 'Marketing'];
+  const frameworks = ['all', 'Scrum', 'Kanban', 'Agile', 'Waterfall', 'Lean'];
   const sortOptions = [
     { value: 'newest', label: 'Newest' },
-    { value: 'price-asc', label: 'Price: Low to High' },
-    { value: 'price-desc', label: 'Price: High to Low' },
-    { value: 'rating', label: 'Highest Rated' }
+    { value: 'points-asc', label: 'Points: Low to High' },
+    { value: 'points-desc', label: 'Points: High to Low' },
+    { value: 'progress', label: 'Most Progress' }
   ];
 
   useEffect(() => {
-    fetchItems();
-  }, [search, category, sort, minPrice, maxPrice, page]);
+    fetchProjects();
+  }, [search, framework, sort, minPoints, maxPoints, page]);
 
-  const fetchItems = async () => {
+  const fetchProjects = async () => {
     setLoading(true);
     try {
       const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/items`, {
-        params: { search, category, sort, minPrice, maxPrice, page, limit: 8 }
+        params: { search, framework, sort, minPoints, maxPoints, page, limit: 8 }
       });
-      setItems(response.data.items);
+      setProjects(response.data.items);
       setTotalPages(response.data.totalPages);
     } catch (error) {
-      console.error('Error fetching items:', error);
+      console.error('Error fetching projects:', error);
     } finally {
       setLoading(false);
     }
@@ -47,15 +47,15 @@ export default function Explore() {
   const handleSearch = (e) => {
     e.preventDefault();
     setPage(1);
-    fetchItems();
+    fetchProjects();
   };
 
   const handleResetFilters = () => {
     setSearch('');
-    setCategory('all');
+    setFramework('all');
     setSort('newest');
-    setMinPrice('');
-    setMaxPrice('');
+    setMinPoints('');
+    setMaxPoints('');
     setPage(1);
   };
 
@@ -68,7 +68,7 @@ export default function Explore() {
           transition={{ duration: 0.4 }}
           className="mb-8"
         >
-          <h1 className="text-3xl md:text-4xl font-bold">Explore Items</h1>
+          <h1 className="text-3xl md:text-4xl font-bold">Explore Projects</h1>
           <p className="text-gray-600 mt-2">Discover amazing projects and resources</p>
         </motion.div>
 
@@ -83,7 +83,7 @@ export default function Explore() {
               <div className="flex-1 relative">
                 <input
                   type="text"
-                  placeholder="Search items..."
+                  placeholder="Search projects..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -92,13 +92,13 @@ export default function Explore() {
               </div>
 
               <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                value={framework}
+                onChange={(e) => setFramework(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
               >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat === 'all' ? 'All Categories' : cat}
+                {frameworks.map((fw) => (
+                  <option key={fw} value={fw}>
+                    {fw === 'all' ? 'All Frameworks' : fw}
                   </option>
                 ))}
               </select>
@@ -119,22 +119,22 @@ export default function Explore() {
             <div className="flex flex-col md:flex-row gap-4 items-end">
               <div className="flex gap-4 flex-1">
                 <div className="flex-1">
-                  <label className="text-sm text-gray-600 block mb-1">Min Price</label>
+                  <label className="text-sm text-gray-600 block mb-1">Min Story Points</label>
                   <input
                     type="number"
-                    placeholder="$0"
-                    value={minPrice}
-                    onChange={(e) => setMinPrice(e.target.value)}
+                    placeholder="0"
+                    value={minPoints}
+                    onChange={(e) => setMinPoints(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="text-sm text-gray-600 block mb-1">Max Price</label>
+                  <label className="text-sm text-gray-600 block mb-1">Max Story Points</label>
                   <input
                     type="number"
-                    placeholder="$1000"
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value)}
+                    placeholder="100"
+                    value={maxPoints}
+                    onChange={(e) => setMaxPoints(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
@@ -167,9 +167,9 @@ export default function Explore() {
               </div>
             ))}
           </div>
-        ) : items.length === 0 ? (
+        ) : projects.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No items found</p>
+            <p className="text-gray-500 text-lg">No projects found</p>
             <button onClick={handleResetFilters} className="text-indigo-600 hover:underline mt-2">
               Clear filters
             </button>
@@ -181,9 +181,9 @@ export default function Explore() {
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
             >
               <AnimatePresence>
-                {items.map((item, i) => (
+                {projects.map((project, i) => (
                   <motion.div
-                    key={item._id}
+                    key={project._id}
                     layout
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -194,29 +194,29 @@ export default function Explore() {
                   >
                     <div className="relative h-48 overflow-hidden">
                       <img
-                        src={item.imageUrl || 'https://via.placeholder.com/300x200/4F46E5/FFFFFF?text=AgileMind'}
-                        alt={item.title}
+                        src={project.imageUrl || 'https://via.placeholder.com/300x200/4F46E5/FFFFFF?text=AgileMind'}
+                        alt={project.title}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                       <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-sm font-semibold">
-                        ★ {item.rating || 4.5}
+                        ⚡ {project.progress || 0}%
                       </div>
                     </div>
                     <div className="p-4">
-                      <h3 className="font-semibold text-lg mb-1 truncate">{item.title}</h3>
-                      <p className="text-gray-600 text-sm mb-2 line-clamp-2">{item.shortDescription}</p>
+                      <h3 className="font-semibold text-lg mb-1 truncate">{project.title}</h3>
+                      <p className="text-gray-600 text-sm mb-2 line-clamp-2">{project.shortDescription}</p>
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-1 text-indigo-600 font-bold">
-                          <FiDollarSign className="w-4 h-4" />
-                          <span>{item.price}</span>
+                          <FiGitBranch className="w-4 h-4" />
+                          <span>{project.framework || 'Scrum'}</span>
                         </div>
                         <div className="flex items-center space-x-1 text-gray-500 text-sm">
-                          <FiMapPin className="w-3 h-3" />
-                          <span>{item.location || 'Online'}</span>
+                          <FiUsers className="w-3 h-3" />
+                          <span>{project.teamSize || 0} members</span>
                         </div>
                       </div>
                       <Link
-                        href={`/items/${item._id}`}
+                        href={`/items/${project._id}`}
                         className="block w-full text-center bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
                       >
                         View Details

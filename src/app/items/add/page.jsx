@@ -4,19 +4,22 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 import axios from 'axios';
-import { motion } from 'framer-motion';
-import { FiX } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiX, FiZap, FiTrendingUp } from 'react-icons/fi';
 
-export default function AddItem() {
+export default function AddProject() {
   const router = useRouter();
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '', shortDescription: '', fullDescription: '',
-    price: '', category: '', imageUrl: '', location: 'Online'
+    storyPoints: '', framework: '', imageUrl: '', teamSize: '3', progress: '0'
   });
   const [previewImage, setPreviewImage] = useState('');
+  const [expanding, setExpanding] = useState(false);
+  const [estimating, setEstimating] = useState(false);
+  const [pointsReasoning, setPointsReasoning] = useState('');
 
   useEffect(() => {
     const checkSession = async () => {
@@ -34,7 +37,7 @@ export default function AddItem() {
     checkSession();
   }, [router]);
 
-  const categories = ['Technology', 'Business', 'Education', 'Health', 'Finance', 'Marketing'];
+  const frameworks = ['Scrum', 'Kanban', 'Agile', 'Waterfall', 'Lean'];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -42,15 +45,68 @@ export default function AddItem() {
     if (name === 'imageUrl') setPreviewImage(value);
   };
 
+  const handleExpandDescription = async () => {
+    if (!formData.shortDescription) return;
+    setExpanding(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/expand-description`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: formData.title,
+          shortDescription: formData.shortDescription,
+          framework: formData.framework
+        }),
+      });
+      const data = await response.json();
+      setFormData(prev => ({ ...prev, fullDescription: data.fullDescription }));
+    } catch (error) {
+      console.error('Error expanding description:', error);
+      alert('Failed to generate description. Please try again.');
+    } finally {
+      setExpanding(false);
+    }
+  };
+
+  const handleEstimatePoints = async () => {
+    if (!formData.shortDescription && !formData.fullDescription) return;
+    setEstimating(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/estimate-points`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: formData.title,
+          shortDescription: formData.shortDescription,
+          fullDescription: formData.fullDescription
+        }),
+      });
+      const data = await response.json();
+      setFormData(prev => ({ ...prev, storyPoints: String(data.storyPoints) }));
+      setPointsReasoning(data.reasoning || '');
+    } catch (error) {
+      console.error('Error estimating points:', error);
+      alert('Failed to estimate story points. Please try again.');
+    } finally {
+      setEstimating(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/items`, formData);
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/items`, {
+        ...formData,
+        price: formData.storyPoints,
+        category: formData.framework,
+        location: formData.teamSize,
+        rating: formData.progress
+      });
       if (response.status === 201) router.push('/items/manage');
     } catch (error) {
-      console.error('Error adding item:', error);
-      alert('Failed to add item. Please try again.');
+      console.error('Error adding project:', error);
+      alert('Failed to add project. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -75,7 +131,7 @@ export default function AddItem() {
             animate={{ opacity: 1, y: 0 }}
             className="text-3xl font-bold mb-6"
           >
-            Add New Item
+            Create New Project
           </motion.h1>
 
           <motion.form
@@ -86,22 +142,22 @@ export default function AddItem() {
             className="bg-white rounded-xl shadow-md p-6 space-y-6"
           >
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Project Name *</label>
               <input
                 type="text" name="title" required value={formData.title} onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
-                placeholder="Enter item title"
+                placeholder="Enter project name"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Framework *</label>
               <select
-                name="category" required value={formData.category} onChange={handleChange}
+                name="framework" required value={formData.framework} onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
               >
-                <option value="">Select a category</option>
-                {categories.map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
+                <option value="">Select a framework</option>
+                {frameworks.map((fw) => (<option key={fw} value={fw}>{fw}</option>))}
               </select>
             </div>
 
@@ -115,20 +171,90 @@ export default function AddItem() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Description *</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">Full Description *</label>
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleExpandDescription}
+                  disabled={!formData.shortDescription || expanding}
+                  className="flex items-center space-x-1 text-xs px-3 py-1.5 bg-violet-50 text-violet-700 rounded-full hover:bg-violet-100 transition-colors disabled:opacity-50"
+                >
+                  {expanding ? (
+                    <>
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-violet-700"></div>
+                      <span>Generating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FiZap className="w-3 h-3" />
+                      <span>AI Expand from Short Description</span>
+                    </>
+                  )}
+                </motion.button>
+              </div>
               <textarea
                 name="fullDescription" required value={formData.fullDescription} onChange={handleChange} rows="4"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all resize-none"
-                placeholder="Detailed description of the item"
+                placeholder="Detailed project description (or click AI Expand above)"
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700">Story Points *</label>
+                  <button
+                    type="button"
+                    onClick={handleEstimatePoints}
+                    disabled={(!formData.shortDescription && !formData.fullDescription) || estimating}
+                    className="text-violet-600 hover:text-violet-800 disabled:opacity-50"
+                    title="AI Estimate"
+                  >
+                    {estimating ? (
+                      <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-violet-700"></div>
+                    ) : (
+                      <FiTrendingUp className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
+                <input
+                  type="number" name="storyPoints" required min="1" value={formData.storyPoints} onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                  placeholder="21"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Team Size</label>
+                <input
+                  type="number" name="teamSize" min="1" value={formData.teamSize} onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                  placeholder="3"
+                />
+              </div>
+            </div>
+
+            <AnimatePresence>
+              {pointsReasoning && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="flex items-start space-x-2 text-xs text-violet-600 bg-violet-50 rounded-lg p-2 overflow-hidden"
+                >
+                  <FiZap className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                  <span className="italic">{pointsReasoning}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Price *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Progress (%)</label>
               <input
-                type="number" name="price" required min="0" step="0.01" value={formData.price} onChange={handleChange}
+                type="number" name="progress" min="0" max="100" value={formData.progress} onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
-                placeholder="0.00"
+                placeholder="0"
               />
             </div>
 
@@ -161,15 +287,6 @@ export default function AddItem() {
               )}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-              <input
-                type="text" name="location" value={formData.location} onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
-                placeholder="City, Country or Online"
-              />
-            </div>
-
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -183,9 +300,9 @@ export default function AddItem() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>Adding Item...</span>
+                  <span>Creating Project...</span>
                 </span>
-              ) : 'Add Item'}
+              ) : 'Create Project'}
             </motion.button>
           </motion.form>
         </div>
