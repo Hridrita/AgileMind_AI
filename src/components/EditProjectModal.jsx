@@ -68,7 +68,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      {isOpen && project && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -84,7 +84,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b">
+            <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
               <h2 className="text-2xl font-bold">Edit Project</h2>
               <button
                 onClick={onClose}
@@ -99,27 +99,42 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Project Name *</label>
                 <input
-                  type="text" name="title" required value={formData.title} onChange={handleChange}
+                  type="text" 
+                  name="title" 
+                  required 
+                  value={formData.title} 
+                  onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  placeholder="Enter project name"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Framework *</label>
                 <select
-                  name="framework" required value={formData.framework} onChange={handleChange}
+                  name="framework" 
+                  required 
+                  value={formData.framework} 
+                  onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                 >
                   <option value="">Select a framework</option>
-                  {frameworks.map((fw) => (<option key={fw} value={fw}>{fw}</option>))}
+                  {frameworks.map((fw) => (
+                    <option key={fw} value={fw}>{fw}</option>
+                  ))}
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Short Description *</label>
                 <input
-                  type="text" name="shortDescription" required value={formData.shortDescription} onChange={handleChange}
+                  type="text" 
+                  name="shortDescription" 
+                  required 
+                  value={formData.shortDescription} 
+                  onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  placeholder="Brief description (max 100 chars)"
                   maxLength="100"
                 />
               </div>
@@ -127,8 +142,13 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Full Description *</label>
                 <textarea
-                  name="fullDescription" required value={formData.fullDescription} onChange={handleChange} rows="3"
+                  name="fullDescription" 
+                  required 
+                  value={formData.fullDescription} 
+                  onChange={handleChange} 
+                  rows="3"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                  placeholder="Detailed project description"
                 />
               </div>
 
@@ -136,15 +156,26 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Story Points *</label>
                   <input
-                    type="number" name="storyPoints" required min="0" value={formData.storyPoints} onChange={handleChange}
+                    type="number" 
+                    name="storyPoints" 
+                    required 
+                    min="0" 
+                    value={formData.storyPoints} 
+                    onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    placeholder="0"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Team Size</label>
                   <input
-                    type="number" name="teamSize" min="1" value={formData.teamSize} onChange={handleChange}
+                    type="number" 
+                    name="teamSize" 
+                    min="1" 
+                    value={formData.teamSize} 
+                    onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    placeholder="3"
                   />
                 </div>
               </div>
@@ -152,26 +183,41 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Progress (%)</label>
                 <input
-                  type="number" name="progress" min="0" max="100" value={formData.progress} onChange={handleChange}
+                  type="number" 
+                  name="progress" 
+                  min="0" 
+                  max="100" 
+                  value={formData.progress} 
+                  onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  placeholder="0"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
                 <input
-                  type="url" name="imageUrl" value={formData.imageUrl} onChange={handleChange}
+                  type="url" 
+                  name="imageUrl" 
+                  value={formData.imageUrl} 
+                  onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  placeholder="https://example.com/image.jpg"
                 />
                 {previewImage && (
                   <div className="mt-2">
-                    <img src={previewImage} alt="Preview" className="h-20 w-20 object-cover rounded-lg" />
+                    <img 
+                      src={previewImage} 
+                      alt="Preview" 
+                      className="h-20 w-20 object-cover rounded-lg border border-gray-200"
+                      onError={() => setPreviewImage('')}
+                    />
                   </div>
                 )}
               </div>
 
               {/* Buttons */}
-              <div className="flex gap-3 pt-4 border-t">
+              <div className="flex gap-3 pt-4 border-t mt-4">
                 <button
                   type="button"
                   onClick={onClose}
@@ -182,7 +228,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                  className="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? 'Updating...' : 'Update Project'}
                 </button>

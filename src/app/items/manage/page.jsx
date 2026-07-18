@@ -7,6 +7,8 @@ import Link from 'next/link';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiEdit, FiTrash2, FiEye, FiPlus } from 'react-icons/fi';
+import EditProjectModal from '@/components/EditProjectModal';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 
 export default function ManageProjects() {
   const router = useRouter();
@@ -15,6 +17,14 @@ export default function ManageProjects() {
   const [projects, setProjects] = useState([]);
   const [fetchingProjects, setFetchingProjects] = useState(true);
   const [deleting, setDeleting] = useState(null);
+  
+  // Edit Modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
+
+  // Delete Modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletingProject, setDeletingProject] = useState(null);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -45,9 +55,20 @@ export default function ManageProjects() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this project?')) return;
+  // Handle delete - open modal instead of confirm
+  const handleDeleteClick = (project) => {
+    setDeletingProject(project);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Handle confirm delete
+  const handleConfirmDelete = async () => {
+    if (!deletingProject) return;
+    
+    const id = deletingProject._id;
     setDeleting(id);
+    setIsDeleteModalOpen(false);
+    
     try {
       await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/items/${id}`);
       setProjects(projects.filter(project => project._id !== id));
@@ -56,7 +77,33 @@ export default function ManageProjects() {
       alert('Failed to delete project. Please try again.');
     } finally {
       setDeleting(null);
+      setDeletingProject(null);
     }
+  };
+
+  // Handle delete modal close
+  const handleDeleteModalClose = () => {
+    setIsDeleteModalOpen(false);
+    setDeletingProject(null);
+  };
+
+  // Handle edit click - open modal
+  const handleEditClick = (project) => {
+    setEditingProject(project);
+    setIsEditModalOpen(true);
+  };
+
+  // Handle edit modal close
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setEditingProject(null);
+  };
+
+  // Handle project update from modal
+  const handleProjectUpdate = (updatedProject) => {
+    setProjects(projects.map(p => 
+      p._id === updatedProject._id ? updatedProject : p
+    ));
   };
 
   if (loading || fetchingProjects) {
@@ -165,11 +212,15 @@ export default function ManageProjects() {
                             <Link href={`/items/${project._id}`} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View">
                               <FiEye className="w-4 h-4" />
                             </Link>
-                            <Link href={`/items/edit/${project._id}`} className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Edit">
-                              <FiEdit className="w-4 h-4" />
-                            </Link>
                             <button
-                              onClick={() => handleDelete(project._id)}
+                              onClick={() => handleEditClick(project)}
+                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Edit"
+                            >
+                              <FiEdit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(project)}
                               disabled={deleting === project._id}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                               title="Delete"
@@ -189,6 +240,22 @@ export default function ManageProjects() {
           </motion.div>
         )}
       </div>
+
+      {/* Edit Project Modal */}
+      <EditProjectModal
+        isOpen={isEditModalOpen}
+        onClose={handleEditModalClose}
+        project={editingProject}
+        onUpdate={handleProjectUpdate}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={handleDeleteModalClose}
+        onConfirm={handleConfirmDelete}
+        projectTitle={deletingProject?.title || ''}
+      />
     </div>
   );
 }
