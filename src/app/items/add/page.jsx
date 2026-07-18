@@ -20,6 +20,19 @@ export default function AddProject() {
   const [expanding, setExpanding] = useState(false);
   const [estimating, setEstimating] = useState(false);
   const [pointsReasoning, setPointsReasoning] = useState('');
+  const [members, setMembers] = useState([]);
+const [memberInput, setMemberInput] = useState('');
+
+const addMember = () => {
+  if (memberInput.trim() && !members.includes(memberInput.trim())) {
+    setMembers([...members, memberInput.trim()]);
+    setMemberInput('');
+  }
+};
+
+const removeMember = (name) => {
+  setMembers(members.filter(m => m !== name));
+};
 
   useEffect(() => {
     const checkSession = async () => {
@@ -98,6 +111,7 @@ export default function AddProject() {
     try {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/items`, {
         ...formData,
+        members,
         price: formData.storyPoints,
         category: formData.framework,
         location: formData.teamSize,
@@ -234,6 +248,28 @@ export default function AddProject() {
                 />
               </div>
             </div>
+
+            <div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">Team Members</label>
+  <div className="flex gap-2">
+    <input
+      type="text" value={memberInput}
+      onChange={(e) => setMemberInput(e.target.value)}
+      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addMember(); } }}
+      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+      placeholder="Enter member name and press Enter"
+    />
+    <button type="button" onClick={addMember} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Add</button>
+  </div>
+  <div className="flex flex-wrap gap-2 mt-2">
+    {members.map((m) => (
+      <span key={m} className="flex items-center gap-1 bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm">
+        {m}
+        <button type="button" onClick={() => removeMember(m)} className="hover:text-red-600"><FiX className="w-3 h-3" /></button>
+      </span>
+    ))}
+  </div>
+</div>
 
             <AnimatePresence>
               {pointsReasoning && (

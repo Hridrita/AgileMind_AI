@@ -20,9 +20,9 @@ import {
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -30,24 +30,10 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const { data } = await authClient.getSession();
-        setSession(data);
-      } catch (error) {
-        console.error('Session check failed:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    checkSession();
-  }, []);
-
   const handleLogout = async () => {
     await authClient.signOut();
-    setSession(null);
     router.push('/');
+    router.refresh();
     setIsMenuOpen(false);
   };
 
@@ -66,7 +52,7 @@ export default function Navbar() {
     { href: '/login', label: 'Login', icon: FiUser },
   ];
 
-  if (loading) {
+  if (isPending) {
     return (
       <nav className="fixed top-0 w-full z-50 bg-white shadow-md">
         <div className="container-custom">

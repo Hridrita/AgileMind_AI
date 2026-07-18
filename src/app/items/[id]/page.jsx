@@ -6,6 +6,7 @@ import Link from 'next/link';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiUsers, FiGitBranch, FiCalendar, FiCheckCircle } from 'react-icons/fi';
+import TaskBoard from '@/components/TaskBoard';
 
 export default function ProjectDetails() {
   const params = useParams();
@@ -13,6 +14,7 @@ export default function ProjectDetails() {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [relatedProjects, setRelatedProjects] = useState([]);
+  const [taskStats, setTaskStats] = useState({ total: 0, done: 0 });
 
   useEffect(() => {
     if (params.id) fetchProjectDetails();
@@ -23,6 +25,15 @@ export default function ProjectDetails() {
     try {
       const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/items/${params.id}`);
       setProject(response.data);
+
+      const tasksRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/tasks`);
+const tasks = tasksRes.data;
+setTaskStats({
+  total: tasks.length,
+  done: tasks.filter(t => t.status === 'done').length
+});
+      
+      // Fetch related projects
       const relatedResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/items`, {
         params: { framework: response.data.framework, limit: 4 }
       });
@@ -59,11 +70,12 @@ export default function ProjectDetails() {
           <span>Back to Explore</span>
         </Link>
 
+        {/* Project Details */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-white rounded-xl shadow-md overflow-hidden"
+          className="bg-white rounded-xl shadow-md overflow-hidden mb-8"
         >
           <div className="grid grid-cols-1 lg:grid-cols-2">
             <div className="relative h-64 lg:h-auto">
@@ -71,6 +83,9 @@ export default function ProjectDetails() {
                 src={project.imageUrl || 'https://via.placeholder.com/600x400/4F46E5/FFFFFF?text=AgileMind'}
                 alt={project.title}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.src = 'https://via.placeholder.com/600x400/4F46E5/FFFFFF?text=AgileMind';
+                }}
               />
             </div>
 
@@ -82,7 +97,7 @@ export default function ProjectDetails() {
                 </span>
               </div>
 
-              <div className="flex items-center space-x-4 mb-4">
+              <div className="flex items-center space-x-4 mb-4 flex-wrap gap-2">
                 <div className="flex items-center space-x-1">
                   <FiCheckCircle className="text-green-500 w-4 h-4" />
                   <span className="font-medium">{project.progress || 0}% Complete</span>
@@ -101,11 +116,13 @@ export default function ProjectDetails() {
                 <div className="text-2xl font-bold text-indigo-600">{project.storyPoints || 0}</div>
                 <div className="text-sm text-gray-600">Total Story Points</div>
                 <div className="w-px h-8 bg-gray-300"></div>
-                <div className="text-2xl font-bold text-green-600">{project.completedTasks || 0}</div>
+                <div className="text-2xl font-bold text-green-600">{taskStats.done}</div>
                 <div className="text-sm text-gray-600">Tasks Done</div>
               </div>
 
-              <p className="text-gray-600 mb-6">{project.fullDescription || project.shortDescription}</p>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                {project.fullDescription || project.shortDescription}
+              </p>
 
               <div className="border-t pt-6">
                 <h3 className="font-semibold mb-3">Project Information</h3>
@@ -132,6 +149,10 @@ export default function ProjectDetails() {
           </div>
         </motion.div>
 
+        {/* Task Board Section */}
+        <TaskBoard projectId={params.id} members={project.members || []} />
+
+        {/* Related Projects */}
         {relatedProjects.length > 0 && (
           <div className="mt-12">
             <h2 className="text-2xl font-bold mb-6">Related Projects</h2>
@@ -151,6 +172,9 @@ export default function ProjectDetails() {
                           src={related.imageUrl || 'https://via.placeholder.com/300x200/4F46E5/FFFFFF?text=AgileMind'}
                           alt={related.title}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          onError={(e) => {
+                            e.target.src = 'https://via.placeholder.com/300x200/4F46E5/FFFFFF?text=AgileMind';
+                          }}
                         />
                       </div>
                       <div className="p-4">
