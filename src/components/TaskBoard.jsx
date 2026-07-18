@@ -189,7 +189,7 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, currentUserId, members
     tags: ''
   });
   const [submitting, setSubmitting] = useState(false);
-  const users = members;
+  const users = members.length > 0 ? members : ['John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Wilson', 'David Brown'];
 
   useEffect(() => {
     if (task) {
@@ -442,11 +442,11 @@ function DeleteTaskModal({ isOpen, onClose, task, onConfirm }) {
 }
 
 // Main TaskBoard Component
-export default function TaskBoard({ projectId, members = [] }) {
-    const {data: session} = authClient.useSession();
-    const currentUserId = session?.user?.id;
+export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
+  const { data: session } = authClient.useSession();
+  const currentUserId = session?.user?.id || session?.user?._id;
   const currentUserEmail = session?.user?.email;
-  const currentUserName = session?.user?.name;
+  const currentUserName = session?.user?.name || session?.user?.email || 'Unknown';
 
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -467,10 +467,7 @@ export default function TaskBoard({ projectId, members = [] }) {
     tags: ''
   });
 
-  // Current user - This should come from your auth system
-  const currentUser = 'John Doe'; // TODO: Replace with actual logged-in user
-
-  const users = members;
+  const users = members.length > 0 ? members : ['John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Wilson', 'David Brown'];
 
   useEffect(() => {
     if (projectId) {
@@ -513,6 +510,10 @@ export default function TaskBoard({ projectId, members = [] }) {
         dueDate: '',
         tags: ''
       });
+      // Notify parent to refresh stats
+      if (onTaskUpdate) {
+        await onTaskUpdate();
+      }
     } catch (error) {
       console.error('Error adding task:', error);
       alert('Failed to add task. Please try again.');
@@ -525,16 +526,24 @@ export default function TaskBoard({ projectId, members = [] }) {
       setTasks(tasks.filter(task => task._id !== taskId));
       setShowDeleteTask(false);
       setSelectedTask(null);
+      // Notify parent to refresh stats
+      if (onTaskUpdate) {
+        await onTaskUpdate();
+      }
     } catch (error) {
       console.error('Error deleting task:', error);
       alert('Failed to delete task. Please try again.');
     }
   };
 
-  const handleUpdateTask = (updatedTask) => {
+  const handleUpdateTask = async(updatedTask) => {
     setTasks(tasks.map(task => 
       task._id === updatedTask._id ? updatedTask : task
     ));
+    // Notify parent to refresh stats
+    if (onTaskUpdate) {
+      await onTaskUpdate();
+    }
   };
 
   const handleStatusChange = async (taskId, newStatus) => {
@@ -544,6 +553,10 @@ export default function TaskBoard({ projectId, members = [] }) {
         requesterId: currentUserId
       });
       setTasks(tasks.map(task => task._id === taskId ? { ...task, status: newStatus } : task));
+      // Notify parent to refresh stats
+       if (onTaskUpdate) {
+        await onTaskUpdate();
+      }
     } catch (error) {
       console.error('Error updating task status:', error);
     }
@@ -675,6 +688,10 @@ export default function TaskBoard({ projectId, members = [] }) {
                           <button
                             className="p-1 hover:bg-blue-100 rounded"
                             title="View Details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTaskClick(task);
+                            }}
                           >
                             <FiEye className="w-3 h-3 text-blue-500" />
                           </button>
