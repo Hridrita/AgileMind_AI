@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX } from 'react-icons/fi';
+import { FiX, FiEdit3 } from 'react-icons/fi';
 import axios from 'axios';
 import api from '@/lib/axios';
 
@@ -89,19 +89,24 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={onClose}
         >
           <motion.div
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
-            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
-              <h2 className="text-2xl font-bold">Edit Project</h2>
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white/95 backdrop-blur z-10 rounded-t-3xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-sm">
+                  <FiEdit3 className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Edit Project</h2>
+              </div>
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -120,7 +125,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
                   required 
                   value={formData.title} 
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50/50 focus:bg-white transition-all"
                   placeholder="Enter project name"
                 />
               </div>
@@ -132,7 +137,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
                   required 
                   value={formData.framework} 
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50/50 focus:bg-white transition-all"
                 >
                   <option value="">Select a framework</option>
                   {frameworks.map((fw) => (
@@ -149,7 +154,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
                   required 
                   value={formData.shortDescription} 
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50/50 focus:bg-white transition-all"
                   placeholder="Brief description (max 100 chars)"
                   maxLength="100"
                 />
@@ -163,7 +168,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
                   value={formData.fullDescription} 
                   onChange={handleChange} 
                   rows="3"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none bg-gray-50/50 focus:bg-white transition-all"
                   placeholder="Detailed project description"
                 />
               </div>
@@ -178,7 +183,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
                     min="0" 
                     value={formData.storyPoints} 
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50/50 focus:bg-white transition-all"
                     placeholder="0"
                   />
                 </div>
@@ -190,7 +195,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
                     min="1" 
                     value={formData.teamSize} 
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50/50 focus:bg-white transition-all"
                     placeholder="3"
                   />
                 </div>
@@ -199,13 +204,13 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
               {/* Team Members */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Team Members</label>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     value={memberInput.name}
                     onChange={(e) => setMemberInput({ ...memberInput, name: e.target.value })}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addMember(); } }}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50/50 focus:bg-white transition-all"
                     placeholder="Member name"
                   />
                   <input
@@ -213,13 +218,13 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
                     value={memberInput.email}
                     onChange={(e) => setMemberInput({ ...memberInput, email: e.target.value })}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addMember(); } }}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50/50 focus:bg-white transition-all"
                     placeholder="Member email"
                   />
                   <button
                     type="button"
                     onClick={addMember}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium shadow-sm shadow-indigo-200"
                   >
                     Add
                   </button>
@@ -228,7 +233,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
                   {members.map((m) => (
                     <span
                       key={m.email || m}
-                      className="flex items-center gap-1 bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm"
+                      className="flex items-center gap-1 bg-gradient-to-r from-indigo-50 to-violet-50 text-indigo-700 px-3 py-1 rounded-full text-sm border border-indigo-100"
                     >
                       {m.name || m} {m.email && <span className="text-indigo-400">({m.email})</span>}
                       <button
@@ -255,7 +260,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
                   max="100" 
                   value={formData.progress} 
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50/50 focus:bg-white transition-all"
                   placeholder="0"
                 />
               </div>
@@ -267,7 +272,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
                   name="imageUrl" 
                   value={formData.imageUrl} 
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50/50 focus:bg-white transition-all"
                   placeholder="https://example.com/image.jpg"
                 />
                 {previewImage && (
@@ -275,7 +280,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
                     <img 
                       src={previewImage} 
                       alt="Preview" 
-                      className="h-20 w-20 object-cover rounded-lg border border-gray-200"
+                      className="h-20 w-20 object-cover rounded-xl border border-gray-200 shadow-sm"
                       onError={() => setPreviewImage('')}
                     />
                   </div>
@@ -283,18 +288,18 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
               </div>
 
               {/* Buttons */}
-              <div className="flex gap-3 pt-4 border-t mt-4">
+              <div className="flex gap-3 pt-4 border-t border-gray-100 mt-4">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-gradient-to-r from-indigo-600 to-violet-600 text-white py-2 rounded-xl hover:shadow-lg hover:shadow-indigo-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                 >
                   {submitting ? 'Updating...' : 'Update Project'}
                 </button>

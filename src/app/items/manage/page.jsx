@@ -6,7 +6,7 @@ import { authClient } from '@/lib/auth-client';
 import Link from 'next/link';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiEdit, FiTrash2, FiEye, FiPlus, FiUser } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiEye, FiPlus, FiUser, FiFolder } from 'react-icons/fi';
 import EditProjectModal from '@/components/EditProjectModal';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import api from '@/lib/axios';
@@ -117,8 +117,11 @@ export default function ManageProjects() {
 
   if (loading || fetchingProjects) {
     return (
-      <div className="pt-16 min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="pt-16 min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-indigo-50">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-100 border-t-indigo-600"></div>
+          <p className="text-sm text-gray-400">Loading projects...</p>
+        </div>
       </div>
     );
   }
@@ -126,20 +129,25 @@ export default function ManageProjects() {
   if (!session) return null;
 
   return (
-    <div className="pt-16 min-h-screen bg-gray-50">
+    <div className="pt-16 min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="container-custom py-8">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6"
+          className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8"
         >
-          <div>
-            <h1 className="text-3xl font-bold">Manage Projects</h1>
-            <p className="text-gray-600 mt-1">View, edit, and delete your projects</p>
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200 flex-shrink-0">
+              <FiFolder className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Manage Projects</h1>
+              <p className="text-gray-500 mt-1">View, edit, and delete your projects</p>
+            </div>
           </div>
           <Link
             href="/items/add"
-            className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105"
+            className="flex items-center space-x-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-5 py-2.5 rounded-xl hover:shadow-lg hover:shadow-indigo-200 transition-all duration-300 transform hover:scale-105 font-medium"
           >
             <FiPlus className="w-5 h-5" />
             <span>Add New</span>
@@ -147,33 +155,37 @@ export default function ManageProjects() {
         </motion.div>
 
         {projects.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-3xl shadow-xl shadow-indigo-100/50 border border-gray-100 p-12 text-center"
+          >
             <div className="text-6xl mb-4">🚀</div>
-            <p className="text-gray-500 text-lg">No projects found</p>
+            <p className="text-gray-700 text-lg font-semibold">No projects found</p>
             <p className="text-gray-400 text-sm mt-1">You haven't created any projects yet</p>
             <Link href="/items/add" className="inline-block mt-4 text-indigo-600 hover:underline font-medium">
               Create your first project →
             </Link>
-          </div>
+          </motion.div>
         ) : (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white rounded-xl shadow-md overflow-hidden"
+            className="bg-white rounded-3xl shadow-xl shadow-indigo-100/50 border border-gray-100 overflow-hidden"
           >
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-gradient-to-r from-gray-50 to-indigo-50/30 border-b border-gray-100">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Framework</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Story Points</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Progress</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Project</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Framework</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Story Points</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Progress</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-100">
                   <AnimatePresence>
                     {projects.map((project) => (
                       <motion.tr
@@ -182,40 +194,40 @@ export default function ManageProjects() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0, x: -50 }}
-                        className="hover:bg-gray-50 transition-colors"
+                        className="hover:bg-indigo-50/30 transition-colors"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm">
                               {project.title?.charAt(0).toUpperCase() || 'P'}
                             </div>
                             <div className="min-w-0">
-                              <div className="font-medium text-gray-900 truncate">{project.title}</div>
+                              <div className="font-semibold text-gray-900 truncate">{project.title}</div>
                               <div className="text-sm text-gray-500 truncate max-w-xs hidden sm:block">{project.shortDescription}</div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                          <span className="px-2 py-1 bg-violet-100 text-violet-700 rounded-full text-xs font-medium">
+                          <span className="px-2.5 py-1 bg-violet-100 text-violet-700 rounded-full text-xs font-medium">
                             {project.framework || 'Scrum'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap font-medium hidden sm:table-cell">
+                        <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-700 hidden sm:table-cell">
                           {project.storyPoints || 0} pts
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
                           <div className="flex items-center space-x-2">
-                            <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
                               <div 
-                                className="h-full bg-green-500 rounded-full transition-all"
+                                className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all"
                                 style={{ width: `${project.progress || 0}%` }}
                               ></div>
                             </div>
-                            <span className="text-sm">{project.progress || 0}%</span>
+                            <span className="text-sm font-medium text-gray-600">{project.progress || 0}%</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex space-x-2">
+                          <div className="flex space-x-1.5">
                             <Link href={`/items/${project._id}`} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View">
                               <FiEye className="w-4 h-4" />
                             </Link>

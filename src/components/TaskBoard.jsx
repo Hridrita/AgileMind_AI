@@ -211,12 +211,23 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, currentUserId, members
     e.preventDefault();
     setSubmitting(true);
     try {
-      const response = await api.put(`${process.env.NEXT_PUBLIC_API_URL}/tasks/${task._id}`, {
+      const parsedTags = formData.tags.split(',').map(t => t.trim()).filter(t => t);
+
+      await api.put(`${process.env.NEXT_PUBLIC_API_URL}/tasks/${task._id}`, {
         ...formData,
         requesterId: currentUserId,
-        tags: formData.tags.split(',').map(t => t.trim()).filter(t => t)
+        tags: parsedTags
       });
-      onUpdate(response.data);
+
+      
+      const mergedTask = {
+        ...task,
+        ...formData,
+        tags: parsedTags,
+        storyPoints: parseInt(formData.storyPoints) || 0,
+      };
+
+      onUpdate(mergedTask);
       onClose();
     } catch (error) {
       console.error('Error updating task:', error);

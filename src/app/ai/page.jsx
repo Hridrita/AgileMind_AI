@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { authClient } from '@/lib/auth-client';
+import { authClient, getAuthToken } from '@/lib/auth-client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiCpu, FiSend, FiRefreshCw, FiZap, FiLayers, FiClock, FiFilter, FiClock as FiHistory } from 'react-icons/fi';
+import { FiCpu, FiSend, FiRefreshCw, FiZap, FiLayers, FiClock, FiFilter, FiClock as FiHistory, FiTrendingUp } from 'react-icons/fi';
 
 const priorityColor = {
   High: 'bg-red-100 text-red-700',
@@ -64,8 +64,8 @@ export default function AIPage() {
 
   const fetchHistory = async (userId) => {
     try {
-      const {data} = await authClient.getSession();
-      const token = data?.session?.token
+      
+      const token = await getAuthToken();
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/story-history/${userId}`,
         {
           headers: {
@@ -85,8 +85,8 @@ export default function AIPage() {
     if (!topic) return;
     setGenerating(true);
     try {
-      const {data} = await authClient.getSession();
-      const token = data?.session?.token
+      
+      const token = await getAuthToken();
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/generate-content`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json',
@@ -107,8 +107,8 @@ export default function AIPage() {
     if (!featureRequest || !session) return;
     setGeneratingStory(true);
     try {
-      const {data} = await authClient.getSession();
-      const token = data?.session?.token
+      
+      const token = await getAuthToken();
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/generate-story`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json',
@@ -132,8 +132,8 @@ export default function AIPage() {
     if (!feedback || !story) return;
     setRefining(true);
     try {
-      const {data} = await authClient.getSession();
-      const token = data?.session?.token
+      
+      const token = await getAuthToken();
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/refine-story`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json',
@@ -166,8 +166,11 @@ export default function AIPage() {
 
   if (loading) {
     return (
-      <div className="pt-16 min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="pt-16 min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-indigo-50">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-100 border-t-indigo-600"></div>
+          <p className="text-sm text-gray-400">Loading AI tools...</p>
+        </div>
       </div>
     );
   }
@@ -175,15 +178,18 @@ export default function AIPage() {
   if (!session) return null;
 
   return (
-    <div className="pt-16 min-h-screen bg-gray-50">
+    <div className="pt-16 min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="container-custom py-8">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
+          className="text-center mb-10"
         >
-          <h1 className="text-3xl md:text-4xl font-bold">AI Tools</h1>
-          <p className="text-gray-600 mt-2">Powered by artificial intelligence</p>
+          <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200 mx-auto mb-4">
+            <FiCpu className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">AI Tools</h1>
+          <p className="text-gray-500 mt-2">Powered by artificial intelligence</p>
         </motion.div>
 
         <div className="flex flex-wrap gap-2 mb-8 justify-center">
@@ -194,10 +200,10 @@ export default function AIPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+              className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
                 activeTab === tab.id
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-100'
+                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-200'
+                  : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
               }`}
             >
               <tab.icon className="w-4 h-4" />
@@ -215,9 +221,12 @@ export default function AIPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.25 }}
-              className="bg-white rounded-xl shadow-md p-6 max-w-2xl mx-auto"
+              className="bg-white rounded-3xl shadow-xl shadow-indigo-100/50 border border-gray-100 p-6 max-w-2xl mx-auto"
             >
-              <h2 className="text-xl font-semibold mb-4">AI Content Generator</h2>
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <FiCpu className="w-5 h-5 text-indigo-600" />
+                AI Content Generator
+              </h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Topic</label>
@@ -226,7 +235,7 @@ export default function AIPage() {
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
                     placeholder="Enter a topic..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50/50 focus:bg-white transition-all"
                   />
                 </div>
                 <div>
@@ -234,7 +243,7 @@ export default function AIPage() {
                   <select
                     value={length}
                     onChange={(e) => setLength(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50/50 focus:bg-white transition-all"
                   >
                     <option value="short">Short</option>
                     <option value="medium">Medium</option>
@@ -246,7 +255,7 @@ export default function AIPage() {
                   whileTap={{ scale: 0.98 }}
                   onClick={handleGenerateContent}
                   disabled={!topic || generating}
-                  className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+                  className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-indigo-200 transition-all disabled:opacity-50 flex items-center justify-center space-x-2"
                 >
                   {generating ? (
                     <>
@@ -268,16 +277,16 @@ export default function AIPage() {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="mt-6 p-4 bg-gray-50 rounded-lg overflow-hidden"
+                    className="mt-6 p-4 bg-gradient-to-br from-gray-50 to-indigo-50/30 rounded-2xl overflow-hidden border border-gray-100"
                   >
                     {content.reasoning && (
-                      <div className="flex items-start space-x-2 mb-3 text-xs text-violet-600 bg-violet-50 rounded-lg p-2">
+                      <div className="flex items-start space-x-2 mb-3 text-xs text-violet-600 bg-violet-50 rounded-xl p-2 border border-violet-100">
                         <FiZap className="w-4 h-4 flex-shrink-0 mt-0.5" />
                         <span className="italic">{content.reasoning}</span>
                       </div>
                     )}
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold">{content.title}</h3>
+                      <h3 className="font-semibold text-gray-900">{content.title}</h3>
                       <button onClick={handleGenerateContent} className="text-indigo-600 hover:text-indigo-800">
                         <FiRefreshCw className="w-4 h-4" />
                       </button>
@@ -285,7 +294,7 @@ export default function AIPage() {
                     <p className="text-gray-600">{content.description}</p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {content.tags?.map((tag, index) => (
-                        <span key={index} className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs">
+                        <span key={index} className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">
                           #{tag}
                         </span>
                       ))}
@@ -306,8 +315,11 @@ export default function AIPage() {
               transition={{ duration: 0.25 }}
               className="max-w-3xl mx-auto space-y-4"
             >
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-xl font-semibold mb-1">AI Agile Story & Task Recommender</h2>
+              <div className="bg-white rounded-3xl shadow-xl shadow-indigo-100/50 border border-gray-100 p-6">
+                <h2 className="text-xl font-semibold mb-1 flex items-center gap-2">
+                  <FiLayers className="w-5 h-5 text-indigo-600" />
+                  AI Agile Story & Task Recommender
+                </h2>
                 <p className="text-sm text-gray-500 mb-4">
                   Type a feature request. AI writes the user story, breaks it into tagged, prioritized tasks,
                   and learns from your past requests + feedback.
@@ -321,7 +333,7 @@ export default function AIPage() {
                       onChange={(e) => setFeatureRequest(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleGenerateStory()}
                       placeholder="e.g. Google Login feature banaite hobe"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50/50 focus:bg-white transition-all"
                     />
                   </div>
                   <motion.button
@@ -329,7 +341,7 @@ export default function AIPage() {
                     whileTap={{ scale: 0.98 }}
                     onClick={handleGenerateStory}
                     disabled={!featureRequest || generatingStory}
-                    className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+                    className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-indigo-200 transition-all disabled:opacity-50 flex items-center justify-center space-x-2"
                   >
                     {generatingStory ? (
                       <>
@@ -353,7 +365,7 @@ export default function AIPage() {
                       exit={{ opacity: 0, height: 0 }}
                       className="mt-6 overflow-hidden"
                     >
-                      <div className="p-4 bg-violet-50 rounded-lg mb-4">
+                      <div className="p-4 bg-gradient-to-br from-violet-50 to-indigo-50 rounded-2xl mb-4 border border-violet-100">
                         <span className="text-xs font-semibold text-violet-600 uppercase tracking-wide">User Story</span>
                         <p className="text-gray-800 mt-1">{story.userStory}</p>
                       </div>
@@ -364,7 +376,7 @@ export default function AIPage() {
                         <select
                           value={categoryFilter}
                           onChange={(e) => setCategoryFilter(e.target.value)}
-                          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm outline-none"
+                          className="px-3 py-1.5 border border-gray-200 rounded-xl text-sm outline-none bg-gray-50/50"
                         >
                           <option value="all">All Categories</option>
                           {Object.keys(categoryColor).map((c) => (
@@ -374,7 +386,7 @@ export default function AIPage() {
                         <select
                           value={priorityFilter}
                           onChange={(e) => setPriorityFilter(e.target.value)}
-                          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm outline-none"
+                          className="px-3 py-1.5 border border-gray-200 rounded-xl text-sm outline-none bg-gray-50/50"
                         >
                           <option value="all">All Priorities</option>
                           <option value="High">High</option>
@@ -393,7 +405,7 @@ export default function AIPage() {
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: i * 0.08 }}
-                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                            className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-indigo-200 transition-colors"
                           >
                             <div className="flex-1">
                               <p className="font-medium text-gray-800">{task.title}</p>
@@ -415,7 +427,7 @@ export default function AIPage() {
                       </div>
 
                       {/* Refine box */}
-                      <div className="mt-4 pt-4 border-t border-gray-200">
+                      <div className="mt-4 pt-4 border-t border-gray-100">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Not quite right? Give feedback to refine
                         </label>
@@ -426,12 +438,12 @@ export default function AIPage() {
                             onChange={(e) => setFeedback(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleRefineStory()}
                             placeholder="e.g. add more testing tasks, reduce hours"
-                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                            className="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50/50 focus:bg-white transition-all"
                           />
                           <button
                             onClick={handleRefineStory}
                             disabled={!feedback || refining}
-                            className="px-4 py-2 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 disabled:opacity-50 flex items-center gap-1"
+                            className="px-4 py-2 bg-violet-600 text-white rounded-xl font-medium hover:bg-violet-700 disabled:opacity-50 flex items-center gap-1 shadow-sm shadow-violet-200"
                           >
                             {refining ? (
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -449,7 +461,7 @@ export default function AIPage() {
 
               {/* History (context-aware recommendations) */}
               {history.length > 0 && (
-                <div className="bg-white rounded-xl shadow-md p-6">
+                <div className="bg-white rounded-3xl shadow-xl shadow-indigo-100/50 border border-gray-100 p-6">
                   <div className="flex items-center gap-2 mb-3">
                     <FiHistory className="w-4 h-4 text-gray-400" />
                     <span className="text-sm font-semibold text-gray-700">Your Past Requests</span>
@@ -459,7 +471,7 @@ export default function AIPage() {
                       <button
                         key={item._id}
                         onClick={() => loadFromHistory(item)}
-                        className="w-full text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm text-gray-700 transition-colors"
+                        className="w-full text-left px-3 py-2 bg-gray-50 hover:bg-indigo-50 rounded-xl text-sm text-gray-700 transition-colors border border-transparent hover:border-indigo-100"
                       >
                         {item.featureRequest}
                       </button>

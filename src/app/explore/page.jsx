@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiSearch, FiUsers, FiGitBranch, FiTarget, FiTrendingUp, FiX } from 'react-icons/fi';
+import { FiSearch, FiUsers, FiGitBranch, FiTarget, FiTrendingUp, FiX, FiFilter, FiGrid, FiList } from 'react-icons/fi';
 
 export default function Explore() {
   const [projects, setProjects] = useState([]);
@@ -17,6 +17,7 @@ export default function Explore() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+  const [viewMode, setViewMode] = useState('grid');
 
   const frameworks = ['all', 'Scrum', 'Kanban', 'Agile', 'Waterfall', 'Lean'];
   const sortOptions = [
@@ -71,20 +72,19 @@ export default function Explore() {
   };
 
   const getProgressColor = (progress) => {
-    if (progress >= 75) return 'bg-green-500';
-    if (progress >= 50) return 'bg-yellow-500';
+    if (progress >= 75) return 'bg-emerald-500';
+    if (progress >= 50) return 'bg-amber-500';
     if (progress >= 25) return 'bg-orange-500';
-    return 'bg-red-500';
+    return 'bg-rose-500';
   };
 
   const getProgressTextColor = (progress) => {
-    if (progress >= 75) return 'text-green-600';
-    if (progress >= 50) return 'text-yellow-600';
+    if (progress >= 75) return 'text-emerald-600';
+    if (progress >= 50) return 'text-amber-600';
     if (progress >= 25) return 'text-orange-600';
-    return 'text-red-600';
+    return 'text-rose-600';
   };
 
-  // Get active filter count
   const getActiveFilterCount = () => {
     let count = 0;
     if (search) count++;
@@ -96,7 +96,7 @@ export default function Explore() {
   };
 
   return (
-    <div className="pt-16 bg-gray-50 min-h-screen">
+    <div className="pt-16 bg-gradient-to-b from-slate-50 to-white min-h-screen">
       <div className="container-custom py-8">
         {/* Header */}
         <motion.div
@@ -107,13 +107,19 @@ export default function Explore() {
         >
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Explore Projects</h1>
-              <p className="text-gray-500 mt-1">Discover amazing projects and resources</p>
+              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                Explore Projects
+              </h1>
+              <p className="text-slate-500 mt-1">Discover amazing projects and resources</p>
             </div>
             {!loading && projects.length > 0 && (
-              <span className="text-sm text-gray-500 bg-white px-4 py-2 rounded-full shadow-sm">
+              <motion.span 
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                className="text-sm text-slate-500 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100"
+              >
                 {totalItems} projects found
-              </span>
+              </motion.span>
             )}
           </div>
         </motion.div>
@@ -123,7 +129,7 @@ export default function Explore() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="bg-white rounded-2xl shadow-lg p-6 mb-6"
+          className="bg-white rounded-2xl shadow-md border border-slate-100 p-6 mb-6"
         >
           <form onSubmit={handleSearch} className="space-y-4">
             <div className="flex flex-col md:flex-row gap-4">
@@ -133,14 +139,14 @@ export default function Explore() {
                   placeholder="Search projects by name or description..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                  className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-slate-50 hover:bg-white"
                 />
-                <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                 {search && (
                   <button
                     type="button"
                     onClick={() => setSearch('')}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
                     <FiX className="w-4 h-4" />
                   </button>
@@ -150,7 +156,7 @@ export default function Explore() {
               <select
                 value={framework}
                 onChange={(e) => setFramework(e.target.value)}
-                className="px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white min-w-[160px]"
+                className="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-slate-50 hover:bg-white min-w-[160px] transition-all"
               >
                 {frameworks.map((fw) => (
                   <option key={fw} value={fw}>
@@ -162,7 +168,7 @@ export default function Explore() {
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
-                className="px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white min-w-[180px]"
+                className="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-slate-50 hover:bg-white min-w-[180px] transition-all"
               >
                 {sortOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -175,24 +181,24 @@ export default function Explore() {
             <div className="flex flex-col md:flex-row gap-4 items-end">
               <div className="flex gap-4 flex-1">
                 <div className="flex-1">
-                  <label className="text-sm font-medium text-gray-600 block mb-1">Min Story Points</label>
+                  <label className="text-sm font-medium text-slate-600 block mb-1">Min Story Points</label>
                   <input
                     type="number"
                     placeholder="0"
                     value={minPoints}
                     onChange={(e) => setMinPoints(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-slate-50 hover:bg-white"
                     min="0"
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="text-sm font-medium text-gray-600 block mb-1">Max Story Points</label>
+                  <label className="text-sm font-medium text-slate-600 block mb-1">Max Story Points</label>
                   <input
                     type="number"
                     placeholder="100"
                     value={maxPoints}
                     onChange={(e) => setMaxPoints(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-slate-50 hover:bg-white"
                     min="0"
                   />
                 </div>
@@ -202,15 +208,15 @@ export default function Explore() {
                   <button
                     type="button"
                     onClick={handleResetFilters}
-                    className="px-5 py-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors font-medium flex items-center gap-2"
+                    className="px-5 py-2.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all font-medium flex items-center gap-2 border border-slate-200 hover:border-indigo-200"
                   >
                     <FiX className="w-4 h-4" />
-                    Clear All ({getActiveFilterCount()})
+                    Clear ({getActiveFilterCount()})
                   </button>
                 )}
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium"
+                  className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl hover:shadow-lg hover:scale-[1.02] transition-all font-medium"
                 >
                   Search
                 </button>
@@ -221,85 +227,93 @@ export default function Explore() {
 
         {/* Active Filters Display */}
         {getActiveFilterCount() > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-wrap gap-2 mb-6"
+          >
             {search && (
-              <span className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full text-sm">
-                Search: {search}
+              <span className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full text-sm border border-indigo-100">
+                <FiSearch className="w-3 h-3" /> {search}
                 <button onClick={() => setSearch('')} className="hover:text-indigo-900">
                   <FiX className="w-3.5 h-3.5" />
                 </button>
               </span>
             )}
             {framework !== 'all' && (
-              <span className="inline-flex items-center gap-1.5 bg-violet-50 text-violet-700 px-3 py-1.5 rounded-full text-sm">
-                Framework: {framework}
+              <span className="inline-flex items-center gap-1.5 bg-violet-50 text-violet-700 px-3 py-1.5 rounded-full text-sm border border-violet-100">
+                <FiGitBranch className="w-3 h-3" /> {framework}
                 <button onClick={() => setFramework('all')} className="hover:text-violet-900">
                   <FiX className="w-3.5 h-3.5" />
                 </button>
               </span>
             )}
             {minPoints && (
-              <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-sm">
-                Min: {minPoints} pts
-                <button onClick={() => setMinPoints('')} className="hover:text-green-900">
+              <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full text-sm border border-emerald-100">
+                <FiTarget className="w-3 h-3" /> Min: {minPoints} pts
+                <button onClick={() => setMinPoints('')} className="hover:text-emerald-900">
                   <FiX className="w-3.5 h-3.5" />
                 </button>
               </span>
             )}
             {maxPoints && (
-              <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-sm">
-                Max: {maxPoints} pts
-                <button onClick={() => setMaxPoints('')} className="hover:text-green-900">
+              <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full text-sm border border-emerald-100">
+                <FiTarget className="w-3 h-3" /> Max: {maxPoints} pts
+                <button onClick={() => setMaxPoints('')} className="hover:text-emerald-900">
                   <FiX className="w-3.5 h-3.5" />
                 </button>
               </span>
             )}
             {sort !== 'newest' && (
-              <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm">
-                Sort: {sortOptions.find(s => s.value === sort)?.label}
+              <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm border border-blue-100">
+                <FiTrendingUp className="w-3 h-3" /> {sortOptions.find(s => s.value === sort)?.label}
                 <button onClick={() => setSort('newest')} className="hover:text-blue-900">
                   <FiX className="w-3.5 h-3.5" />
                 </button>
               </span>
             )}
-          </div>
+          </motion.div>
         )}
 
         {/* Loading Skeleton */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(8)].map((_, index) => (
-              <div key={index} className="bg-white rounded-2xl shadow-md overflow-hidden animate-pulse">
+              <div key={index} className="bg-white rounded-2xl shadow-md overflow-hidden animate-pulse border border-slate-100">
                 <div className="p-5 space-y-4">
                   <div className="flex justify-between items-start">
-                    <div className="h-5 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-5 bg-gray-200 rounded w-16"></div>
+                    <div className="h-5 bg-slate-200 rounded w-3/4"></div>
+                    <div className="h-5 bg-slate-200 rounded w-16"></div>
                   </div>
-                  <div className="h-3 bg-gray-200 rounded w-full"></div>
-                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                  <div className="h-3 bg-slate-200 rounded w-full"></div>
+                  <div className="h-3 bg-slate-200 rounded w-2/3"></div>
                   <div className="flex justify-between items-center">
-                    <div className="h-4 bg-gray-200 rounded w-20"></div>
-                    <div className="h-4 bg-gray-200 rounded w-16"></div>
+                    <div className="h-4 bg-slate-200 rounded w-20"></div>
+                    <div className="h-4 bg-slate-200 rounded w-16"></div>
                   </div>
-                  <div className="h-2 bg-gray-200 rounded-full w-full"></div>
-                  <div className="h-10 bg-gray-200 rounded-xl w-full"></div>
+                  <div className="h-2 bg-slate-200 rounded-full w-full"></div>
+                  <div className="h-10 bg-slate-200 rounded-xl w-full"></div>
                 </div>
               </div>
             ))}
           </div>
         ) : projects.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
-            <div className="text-6xl mb-4">🔍</div>
-            <p className="text-gray-500 text-lg">No projects found</p>
-            <p className="text-gray-400 text-sm mt-1">Try adjusting your search or filters</p>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-16 bg-white rounded-2xl shadow-md border border-slate-100"
+          >
+            <div className="text-7xl mb-4">🔍</div>
+            <p className="text-slate-500 text-lg font-medium">No projects found</p>
+            <p className="text-slate-400 text-sm mt-1">Try adjusting your search or filters</p>
             <button 
               onClick={handleResetFilters} 
-              className="text-indigo-600 hover:underline mt-4 font-medium inline-flex items-center gap-2"
+              className="text-indigo-600 hover:text-indigo-700 mt-4 font-medium inline-flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-xl hover:bg-indigo-100 transition-colors"
             >
               <FiX className="w-4 h-4" />
               Clear all filters
             </button>
-          </div>
+          </motion.div>
         ) : (
           <>
             {/* Projects Grid */}
@@ -317,12 +331,12 @@ export default function Explore() {
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ duration: 0.3, delay: i * 0.05 }}
                     whileHover={{ y: -8 }}
-                    className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100"
+                    className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-slate-100 hover:border-indigo-200 group"
                   >
                     <div className="p-5">
                       {/* Header */}
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="font-semibold text-gray-900 text-lg leading-tight line-clamp-2 flex-1">
+                        <h3 className="font-semibold text-slate-900 text-lg leading-tight line-clamp-2 flex-1 group-hover:text-indigo-600 transition-colors">
                           {project.title}
                         </h3>
                         <span className="flex-shrink-0 text-xs font-medium px-2.5 py-1 bg-violet-100 text-violet-700 rounded-full">
@@ -331,17 +345,17 @@ export default function Explore() {
                       </div>
 
                       {/* Description */}
-                      <p className="text-gray-500 text-sm line-clamp-2 mb-3 min-h-[40px]">
+                      <p className="text-slate-500 text-sm line-clamp-2 mb-3 min-h-[40px]">
                         {project.shortDescription || 'No description'}
                       </p>
 
                       {/* Stats */}
                       <div className="flex items-center justify-between text-sm mb-3">
-                        <div className="flex items-center gap-1.5 text-gray-500">
+                        <div className="flex items-center gap-1.5 text-slate-500">
                           <FiGitBranch className="w-3.5 h-3.5 text-indigo-500" />
                           <span>{project.framework || 'Scrum'}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-gray-500">
+                        <div className="flex items-center gap-1.5 text-slate-500">
                           <FiUsers className="w-3.5 h-3.5 text-blue-500" />
                           <span>{project.members?.length || 0} members</span>
                         </div>
@@ -353,7 +367,7 @@ export default function Explore() {
                           <FiTarget className="w-3 h-3" />
                           {project.storyPoints || 0} pts
                         </span>
-                        <span className="flex items-center gap-1 bg-green-50 text-green-600 px-2.5 py-1 rounded-full">
+                        <span className="flex items-center gap-1 bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full">
                           <FiTrendingUp className="w-3 h-3" />
                           {project.progress || 0}% done
                         </span>
@@ -361,13 +375,13 @@ export default function Explore() {
 
                       {/* Progress Bar */}
                       <div className="mb-3">
-                        <div className="flex justify-between text-xs text-gray-500 mb-0.5">
+                        <div className="flex justify-between text-xs text-slate-500 mb-0.5">
                           <span>Progress</span>
                           <span className={`font-medium ${getProgressTextColor(project.progress || 0)}`}>
                             {project.progress || 0}%
                           </span>
                         </div>
-                        <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${project.progress || 0}%` }}
@@ -380,7 +394,7 @@ export default function Explore() {
                       {/* View Details Button */}
                       <Link
                         href={`/items/${project._id}`}
-                        className="block w-full text-center bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-indigo-700 transition-colors duration-200"
+                        className="block w-full text-center bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 py-2.5 rounded-xl font-medium hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
                       >
                         View Details →
                       </Link>
@@ -396,7 +410,7 @@ export default function Explore() {
                 <button
                   onClick={() => setPage(Math.max(1, page - 1))}
                   disabled={page === 1}
-                  className="px-4 py-2 rounded-xl transition-all duration-200 font-medium bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 rounded-xl transition-all duration-200 font-medium bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-200"
                 >
                   Previous
                 </button>
@@ -417,8 +431,8 @@ export default function Explore() {
                       onClick={() => setPage(pageNum)}
                       className={`px-4 py-2 rounded-xl transition-all duration-200 font-medium ${
                         page === pageNum
-                          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
-                          : 'bg-white text-gray-600 hover:bg-gray-100'
+                          ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-200'
+                          : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                       }`}
                     >
                       {pageNum}
@@ -428,7 +442,7 @@ export default function Explore() {
                 <button
                   onClick={() => setPage(Math.min(totalPages, page + 1))}
                   disabled={page === totalPages}
-                  className="px-4 py-2 rounded-xl transition-all duration-200 font-medium bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 rounded-xl transition-all duration-200 font-medium bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-200"
                 >
                   Next
                 </button>

@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { authClient } from '@/lib/auth-client';
+import { authClient, getAuthToken } from '@/lib/auth-client';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiZap, FiTrendingUp, FiUserPlus, FiUsers, FiTag, FiCalendar, FiTarget } from 'react-icons/fi';
+import { FiX, FiZap, FiTrendingUp, FiUserPlus, FiUsers, FiTag, FiCalendar, FiTarget, FiFileText, FiLayers, FiFlag } from 'react-icons/fi';
 import api from '@/lib/axios';
 
 export default function AddProject() {
@@ -68,8 +68,8 @@ export default function AddProject() {
     if (!formData.shortDescription) return;
     setExpanding(true);
     try {
-      const {data} = await authClient.getSession();
-      const token =  data?.session?.token;
+      
+      const token = await getAuthToken();
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/expand-description`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json',
@@ -144,8 +144,11 @@ export default function AddProject() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-16">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen flex items-center justify-center pt-16 bg-gradient-to-br from-gray-50 via-white to-indigo-50">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-100 border-t-indigo-600"></div>
+          <p className="text-sm text-gray-400">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -153,16 +156,21 @@ export default function AddProject() {
   if (!session) return null;
 
   return (
-    <div className="pt-16 min-h-screen bg-gray-50">
+    <div className="pt-16 min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="container-custom py-8">
         <div className="max-w-3xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
+            className="mb-8 flex items-center gap-4"
           >
-            <h1 className="text-3xl font-bold text-gray-900">Create New Project</h1>
-            <p className="text-gray-500 mt-1">Fill in the details below to create your project</p>
+            <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200 flex-shrink-0">
+              <FiLayers className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Create New Project</h1>
+              <p className="text-gray-500 mt-1">Fill in the details below to create your project</p>
+            </div>
           </motion.div>
 
           <motion.form
@@ -170,7 +178,7 @@ export default function AddProject() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             onSubmit={handleSubmit}
-            className="bg-white rounded-2xl shadow-lg p-8 space-y-6"
+            className="bg-white rounded-3xl shadow-xl shadow-indigo-100/50 border border-gray-100 p-8 space-y-6"
           >
             {/* Project Name */}
             <div>
@@ -183,7 +191,7 @@ export default function AddProject() {
                 required 
                 value={formData.title} 
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all bg-gray-50/50 focus:bg-white"
                 placeholder="Enter project name"
               />
             </div>
@@ -198,7 +206,7 @@ export default function AddProject() {
                 required 
                 value={formData.framework} 
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-white"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-gray-50/50 focus:bg-white"
               >
                 <option value="">Select a framework</option>
                 {frameworks.map((fw) => (
@@ -218,14 +226,14 @@ export default function AddProject() {
                 required 
                 value={formData.shortDescription} 
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all bg-gray-50/50 focus:bg-white"
                 placeholder="Brief description (max 100 chars)" 
                 maxLength="100"
               />
             </div>
 
             {/* Full Description with AI Expand */}
-            <div>
+            <div className="bg-gradient-to-br from-violet-50/50 to-indigo-50/50 rounded-2xl p-5 border border-violet-100">
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-sm font-semibold text-gray-700">
                   Full Description <span className="text-red-500">*</span>
@@ -236,7 +244,7 @@ export default function AddProject() {
                   whileTap={{ scale: 0.98 }}
                   onClick={handleExpandDescription}
                   disabled={!formData.shortDescription || expanding}
-                  className="flex items-center space-x-1.5 text-xs px-3 py-1.5 bg-violet-50 text-violet-700 rounded-full hover:bg-violet-100 transition-colors disabled:opacity-50"
+                  className="flex items-center space-x-1.5 text-xs px-3 py-1.5 bg-white text-violet-700 rounded-full hover:bg-violet-100 transition-colors disabled:opacity-50 shadow-sm border border-violet-200"
                 >
                   {expanding ? (
                     <>
@@ -257,7 +265,7 @@ export default function AddProject() {
                 value={formData.fullDescription} 
                 onChange={handleChange} 
                 rows="4"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all resize-none"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all resize-none bg-white"
                 placeholder="Detailed project description (or click AI Expand above)"
               />
             </div>
@@ -273,7 +281,7 @@ export default function AddProject() {
                     type="button"
                     onClick={handleEstimatePoints}
                     disabled={(!formData.shortDescription && !formData.fullDescription) || estimating}
-                    className="flex items-center space-x-1 text-xs text-violet-600 hover:text-violet-800 disabled:opacity-50"
+                    className="flex items-center space-x-1 text-xs text-violet-600 hover:text-violet-800 disabled:opacity-50 font-medium"
                   >
                     {estimating ? (
                       <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-violet-700"></div>
@@ -292,7 +300,7 @@ export default function AddProject() {
                   min="1" 
                   value={formData.storyPoints} 
                   onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all bg-gray-50/50 focus:bg-white"
                   placeholder="e.g., 21"
                 />
               </div>
@@ -306,7 +314,7 @@ export default function AddProject() {
                   min="1" 
                   value={formData.teamSize} 
                   onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all bg-gray-50/50 focus:bg-white"
                   placeholder="3"
                 />
               </div>
@@ -317,7 +325,7 @@ export default function AddProject() {
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                 Team Members
               </label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text" 
                   value={memberInput.name}
@@ -328,7 +336,7 @@ export default function AddProject() {
                       addMember(); 
                     } 
                   }}
-                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-gray-50/50 focus:bg-white"
                   placeholder="Enter member name"
                 />
                 <input
@@ -341,13 +349,13 @@ export default function AddProject() {
                       addMember();
                     }
                   }}
-                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-gray-50/50 focus:bg-white"
                   placeholder="Enter member email"
                 />
                 <button 
                   type="button" 
                   onClick={addMember} 
-                  className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors flex items-center space-x-1"
+                  className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors flex items-center justify-center space-x-1 font-medium shadow-sm shadow-indigo-200"
                 >
                   <FiUserPlus className="w-4 h-4" />
                   <span>Add</span>
@@ -355,7 +363,7 @@ export default function AddProject() {
               </div>
               <div className="flex flex-wrap gap-2 mt-3">
                 {members.map((m) => (
-                  <span key={m.email} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full text-sm">
+                  <span key={m.email} className="flex items-center gap-1.5 bg-gradient-to-r from-indigo-50 to-violet-50 text-indigo-700 px-3 py-1.5 rounded-full text-sm border border-indigo-100">
                     <FiUsers className="w-3.5 h-3.5" />
                     {m.name} <span className="text-indigo-400">({m.email})</span>
                     <button 
@@ -377,7 +385,7 @@ export default function AddProject() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="flex items-start space-x-2 text-xs text-violet-600 bg-violet-50 rounded-xl p-3 overflow-hidden"
+                  className="flex items-start space-x-2 text-xs text-violet-600 bg-violet-50 rounded-xl p-3 overflow-hidden border border-violet-100"
                 >
                   <FiZap className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span className="italic">{pointsReasoning}</span>
@@ -388,27 +396,27 @@ export default function AddProject() {
             {/* Start & End Date */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Start Date
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                  <FiCalendar className="w-3.5 h-3.5 text-gray-400" /> Start Date
                 </label>
                 <input
                   type="date" 
                   name="startDate" 
                   value={formData.startDate} 
                   onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all bg-gray-50/50 focus:bg-white"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  End Date
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                  <FiCalendar className="w-3.5 h-3.5 text-gray-400" /> End Date
                 </label>
                 <input
                   type="date" 
                   name="endDate" 
                   value={formData.endDate} 
                   onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all bg-gray-50/50 focus:bg-white"
                 />
               </div>
             </div>
@@ -425,7 +433,7 @@ export default function AddProject() {
                 max="100" 
                 value={formData.progress} 
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all bg-gray-50/50 focus:bg-white"
                 placeholder="0"
               />
             </div>
@@ -436,7 +444,7 @@ export default function AddProject() {
               whileTap={{ scale: 0.99 }}
               type="submit"
               disabled={submitting}
-              className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-semibold hover:bg-indigo-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+              className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white py-3.5 rounded-xl font-semibold hover:from-indigo-700 hover:to-violet-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-lg shadow-lg shadow-indigo-200"
             >
               {submitting ? (
                 <span className="flex items-center justify-center space-x-2">

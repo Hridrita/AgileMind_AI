@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { authClient } from './auth-client';
+import { getAuthToken } from './auth-client';
+
 
 
 const api = axios.create({
@@ -7,8 +8,8 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(async (config) => {
-  const { data } = await authClient.getSession(); // session already thakle token pao
-  const token = data?.session?.token; // ba authClient.token() call, plugin version onujayi
+  const token = await getAuthToken(); 
+ 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
