@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiEdit, FiTrash2, FiEye, FiPlus, FiUser } from 'react-icons/fi';
 import EditProjectModal from '@/components/EditProjectModal';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
+import api from '@/lib/axios';
 
 export default function ManageProjects() {
   const router = useRouter();
@@ -54,7 +55,7 @@ export default function ManageProjects() {
     setFetchingProjects(true);
     try {
       // Fetch only projects created by current user
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/items/user/${userId}`);
+      const response = await api.get(`${process.env.NEXT_PUBLIC_API_URL}/items/user/${userId}`);
       setProjects(response.data);
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -78,7 +79,7 @@ export default function ManageProjects() {
     setIsDeleteModalOpen(false);
     
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/items/${id}?userId=${currentUserId}`);
+      await api.delete(`${process.env.NEXT_PUBLIC_API_URL}/items/${id}?userId=${currentUserId}`);
       setProjects(projects.filter(project => project._id !== id));
     } catch (error) {
       console.error('Error deleting project:', error);

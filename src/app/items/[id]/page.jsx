@@ -16,6 +16,7 @@ import {
   FiAward,
 } from "react-icons/fi";
 import TaskBoard from "@/components/TaskBoard";
+import api from "@/lib/axios";
 
 export default function ProjectDetails() {
   const params = useParams();
@@ -29,39 +30,9 @@ export default function ProjectDetails() {
     progress: 0,
   });
 
-  const fetchProjectDetails = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/items/${params.id}`,
-        {
-          params: { _t: Date.now() },
-          headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
-        }
-      );
-      setProject(response.data);
-      await fetchTaskStats();
-
-      const relatedResponse = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/items`,
-        {
-          params: { framework: response.data.framework, limit: 4 },
-        }
-      );
-      setRelatedProjects(
-        relatedResponse.data.items.filter((i) => i._id !== params.id)
-      );
-    } catch (error) {
-      console.error("Error fetching project:", error);
-      router.push("/explore");
-    } finally {
-      setLoading(false);
-    }
-  }, [params.id, router]);
-
   const fetchTaskStats = useCallback(async () => {
     try {
-      const tasksRes = await axios.get(
+      const tasksRes = await api.get(
         `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/tasks`,
         {
           params: { _t: Date.now() },
@@ -82,6 +53,38 @@ export default function ProjectDetails() {
       console.error("Error fetching task stats:", error);
     }
   }, [params.id]);
+
+  const fetchProjectDetails = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await api.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/items/${params.id}`,
+        {
+          params: { _t: Date.now() },
+          headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+        }
+      );
+      setProject(response.data);
+      await fetchTaskStats();
+
+      const relatedResponse = await api.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/items`,
+        {
+          params: { framework: response.data.framework, limit: 4 },
+        }
+      );
+      setRelatedProjects(
+        relatedResponse.data.items.filter((i) => i._id !== params.id)
+      );
+    } catch (error) {
+      console.error("Error fetching project:", error);
+      router.push("/explore");
+    } finally {
+      setLoading(false);
+    }
+  }, [params.id, router, fetchTaskStats]);
+
+  
 
   useEffect(() => {
     if (params.id) fetchProjectDetails();

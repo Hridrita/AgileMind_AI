@@ -64,9 +64,18 @@ export default function AIPage() {
 
   const fetchHistory = async (userId) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/story-history/${userId}`);
-      const data = await res.json();
-      setHistory(data);
+      const {data} = await authClient.getSession();
+      const token = data?.session?.token
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/story-history/${userId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+      const data2 = await res.json();
+      setHistory(data2);
     } catch (error) {
       console.error('Error fetching history:', error);
     }
@@ -76,13 +85,17 @@ export default function AIPage() {
     if (!topic) return;
     setGenerating(true);
     try {
+      const {data} = await authClient.getSession();
+      const token = data?.session?.token
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/generate-content`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+         },
         body: JSON.stringify({ topic, type: 'description', length }),
       });
-      const data = await response.json();
-      setContent(data);
+      const data2 = await response.json();
+      setContent(data2);
     } catch (error) {
       console.error('Error generating content:', error);
     } finally {
@@ -94,16 +107,20 @@ export default function AIPage() {
     if (!featureRequest || !session) return;
     setGeneratingStory(true);
     try {
+      const {data} = await authClient.getSession();
+      const token = data?.session?.token
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/generate-story`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+         },
         body: JSON.stringify({ featureRequest, userId: session.user.id }),
       });
-      const data = await response.json();
-      setStory(data);
+      const data2 = await response.json();
+      setStory(data2);
       setCategoryFilter('all');
       setPriorityFilter('all');
-      fetchHistory(session.user.id);
+      fetchHistory(session?.user.id);
     } catch (error) {
       console.error('Error generating story:', error);
     } finally {
@@ -115,13 +132,17 @@ export default function AIPage() {
     if (!feedback || !story) return;
     setRefining(true);
     try {
+      const {data} = await authClient.getSession();
+      const token = data?.session?.token
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/refine-story`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+         },
         body: JSON.stringify({ featureRequest, previousStory: story, feedback }),
       });
-      const data = await response.json();
-      setStory(data);
+      const data2 = await response.json();
+      setStory(data2);
       setFeedback('');
     } catch (error) {
       console.error('Error refining story:', error);

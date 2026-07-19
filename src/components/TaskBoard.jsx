@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiPlus, FiEdit2, FiTrash2, FiUser, FiCalendar, FiFlag, FiX, FiAlertTriangle, FiInfo, FiEye } from 'react-icons/fi';
 import axios from 'axios';
 import { authClient } from '@/lib/auth-client';
+import api from '@/lib/axios';
 
 const priorityColors = {
   low: 'bg-blue-100 text-blue-700',
@@ -210,7 +211,7 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, currentUserId, members
     e.preventDefault();
     setSubmitting(true);
     try {
-      const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/tasks/${task._id}`, {
+      const response = await api.put(`${process.env.NEXT_PUBLIC_API_URL}/tasks/${task._id}`, {
         ...formData,
         requesterId: currentUserId,
         tags: formData.tags.split(',').map(t => t.trim()).filter(t => t)
@@ -480,7 +481,7 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
   const fetchTasks = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/tasks`);
+      const response = await api.get(`${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/tasks`);
       setTasks(response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -492,7 +493,7 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
   const handleAddTask = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/tasks`, {
+      const response = await api.post(`${process.env.NEXT_PUBLIC_API_URL}/tasks`, {
         ...formData,
         projectId: projectId,
         creatorId: currentUserId,
@@ -523,7 +524,7 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
 
   const handleDeleteTask = async (taskId) => {
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}?requesterId=${currentUserId}`);
+      await api.delete(`${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}?requesterId=${currentUserId}`);
       setTasks(tasks.filter(task => task._id !== taskId));
       setShowDeleteTask(false);
       setSelectedTask(null);
@@ -547,7 +548,7 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
 
   const handleStatusChange = async (taskId, newStatus) => {
     try {
-      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}`, {
+      await api.put(`${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}`, {
         status: newStatus,
         requesterId: currentUserEmail 
       });

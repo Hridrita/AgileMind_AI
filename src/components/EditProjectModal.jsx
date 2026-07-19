@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX } from 'react-icons/fi';
 import axios from 'axios';
+import api from '@/lib/axios';
 
 export default function EditProjectModal({ isOpen, onClose, project, onUpdate }) {
   const [formData, setFormData] = useState({
@@ -61,7 +62,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
     e.preventDefault();
     setSubmitting(true);
     try {
-      const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/items/${project._id}`, {
+      const response = await api.put(`${process.env.NEXT_PUBLIC_API_URL}/items/${project._id}`, {
         ...formData,
         members,
         price: formData.storyPoints,

@@ -6,6 +6,7 @@ import { authClient } from '@/lib/auth-client';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiZap, FiTrendingUp, FiUserPlus, FiUsers, FiTag, FiCalendar, FiTarget } from 'react-icons/fi';
+import api from '@/lib/axios';
 
 export default function AddProject() {
   const router = useRouter();
@@ -67,17 +68,21 @@ export default function AddProject() {
     if (!formData.shortDescription) return;
     setExpanding(true);
     try {
+      const {data} = await authClient.getSession();
+      const token =  data?.session?.token;
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/expand-description`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+         },
         body: JSON.stringify({
           title: formData.title,
           shortDescription: formData.shortDescription,
           framework: formData.framework
         }),
       });
-      const data = await response.json();
-      setFormData(prev => ({ ...prev, fullDescription: data.fullDescription }));
+      const data2 = await response.json();
+      setFormData(prev => ({ ...prev, fullDescription: data2.fullDescription }));
     } catch (error) {
       console.error('Error expanding description:', error);
       alert('Failed to generate description. Please try again.');
@@ -90,18 +95,22 @@ export default function AddProject() {
     if (!formData.shortDescription && !formData.fullDescription) return;
     setEstimating(true);
     try {
+      const { data } = await authClient.getSession();
+      const token = data?.session?.token;
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/estimate-points`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+         },
         body: JSON.stringify({
           title: formData.title,
           shortDescription: formData.shortDescription,
           fullDescription: formData.fullDescription
         }),
       });
-      const data = await response.json();
-      setFormData(prev => ({ ...prev, storyPoints: String(data.storyPoints) }));
-      setPointsReasoning(data.reasoning || '');
+      const data2 = await response.json();
+      setFormData(prev => ({ ...prev, storyPoints: String(data2.storyPoints) }));
+      setPointsReasoning(data2.reasoning || '');
     } catch (error) {
       console.error('Error estimating points:', error);
       alert('Failed to estimate story points. Please try again.');
@@ -115,7 +124,7 @@ export default function AddProject() {
     setSubmitting(true);
     try {
       const userId = session?.user?.id || session?.user?._id;
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/items`, {
+      const response = await api.post(`${process.env.NEXT_PUBLIC_API_URL}/items`, {
         ...formData,
         members,
          createdBy: userId, 
