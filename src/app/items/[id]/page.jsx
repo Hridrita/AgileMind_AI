@@ -299,7 +299,7 @@ export default function ProjectDetails() {
                   {project.members.map((member, index) => (
                     <span key={index} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full text-sm">
                       <FiUsers className="w-3.5 h-3.5" />
-                      {member}
+                      {typeof member === 'string' ? member : member.name}
                     </span>
                   ))}
                 </div>

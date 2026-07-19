@@ -17,7 +17,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
     progress: ''
   });
   const [members, setMembers] = useState([]);
-  const [memberInput, setMemberInput] = useState('');
+  const [memberInput, setMemberInput] = useState({ name: '', email: '' });
   const [submitting, setSubmitting] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
 
@@ -47,15 +47,14 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
   };
 
   const addMember = () => {
-    const name = memberInput.trim();
-    if (name && !members.includes(name)) {
-      setMembers([...members, name]);
-      setMemberInput('');
+    if (memberInput.name.trim() && memberInput.email.trim() && !members.some(m => m.email === memberInput.email.trim())) {
+      setMembers([...members, { name: memberInput.name.trim(), email: memberInput.email.trim() }]);
+      setMemberInput({ name: '', email: '' });
     }
   };
 
-  const removeMember = (name) => {
-    setMembers(members.filter(m => m !== name));
+  const removeMember = (email) => {
+    setMembers(members.filter(m => m.email !== email));
   };
 
   const handleSubmit = async (e) => {
@@ -202,11 +201,19 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    value={memberInput}
-                    onChange={(e) => setMemberInput(e.target.value)}
+                    value={memberInput.name}
+                    onChange={(e) => setMemberInput({ ...memberInput, name: e.target.value })}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addMember(); } }}
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                    placeholder="Enter member name and press Enter"
+                    placeholder="Member name"
+                  />
+                  <input
+                    type="email"
+                    value={memberInput.email}
+                    onChange={(e) => setMemberInput({ ...memberInput, email: e.target.value })}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addMember(); } }}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    placeholder="Member email"
                   />
                   <button
                     type="button"
@@ -219,13 +226,13 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate })
                 <div className="flex flex-wrap gap-2 mt-2">
                   {members.map((m) => (
                     <span
-                      key={m}
+                      key={m.email || m}
                       className="flex items-center gap-1 bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm"
                     >
-                      {m}
+                      {m.name || m} {m.email && <span className="text-indigo-400">({m.email})</span>}
                       <button
                         type="button"
-                        onClick={() => removeMember(m)}
+                        onClick={() => removeMember(m.email || m)}
                         className="hover:text-red-600"
                       >
                         <FiX className="w-3 h-3" />

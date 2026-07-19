@@ -27,7 +27,7 @@ export default function AddProject() {
   const [estimating, setEstimating] = useState(false);
   const [pointsReasoning, setPointsReasoning] = useState('');
   const [members, setMembers] = useState([]);
-  const [memberInput, setMemberInput] = useState('');
+  const [memberInput, setMemberInput] = useState({ name: '', email: '' });
 
   const frameworks = ['Scrum', 'Kanban', 'Agile', 'Waterfall', 'Lean'];
 
@@ -53,14 +53,14 @@ export default function AddProject() {
   };
 
   const addMember = () => {
-    if (memberInput.trim() && !members.includes(memberInput.trim())) {
-      setMembers([...members, memberInput.trim()]);
-      setMemberInput('');
+    if (memberInput.name.trim() && memberInput.email.trim() && !members.some(m => m.email === memberInput.email.trim())) {
+      setMembers([...members, { name: memberInput.name.trim(), email: memberInput.email.trim() }]);
+      setMemberInput({ name: '', email: '' });
     }
   };
 
-  const removeMember = (name) => {
-    setMembers(members.filter(m => m !== name));
+  const removeMember = (email) => {
+    setMembers(members.filter(m => m.email !== email));
   };
 
   const handleExpandDescription = async () => {
@@ -311,8 +311,8 @@ export default function AddProject() {
               <div className="flex gap-2">
                 <input
                   type="text" 
-                  value={memberInput}
-                  onChange={(e) => setMemberInput(e.target.value)}
+                  value={memberInput.name}
+                  onChange={(e) => setMemberInput({ ...memberInput, name: e.target.value })}
                   onKeyDown={(e) => { 
                     if (e.key === 'Enter') { 
                       e.preventDefault(); 
@@ -321,6 +321,19 @@ export default function AddProject() {
                   }}
                   className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                   placeholder="Enter member name"
+                />
+                <input
+                  type="email"
+                  value={memberInput.email}
+                  onChange={(e) => setMemberInput({ ...memberInput, email: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addMember();
+                    }
+                  }}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  placeholder="Enter member email"
                 />
                 <button 
                   type="button" 
@@ -333,12 +346,12 @@ export default function AddProject() {
               </div>
               <div className="flex flex-wrap gap-2 mt-3">
                 {members.map((m) => (
-                  <span key={m} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full text-sm">
+                  <span key={m.email} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full text-sm">
                     <FiUsers className="w-3.5 h-3.5" />
-                    {m}
+                    {m.name} <span className="text-indigo-400">({m.email})</span>
                     <button 
                       type="button" 
-                      onClick={() => removeMember(m)} 
+                      onClick={() => removeMember(m.email)} 
                       className="hover:text-red-600 ml-1"
                     >
                       <FiX className="w-3.5 h-3.5" />

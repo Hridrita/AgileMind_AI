@@ -68,7 +68,9 @@ function Toast({ message, type, onClose }) {
 }
 
 // Task Details Modal (View Only)
-function TaskDetailsModal({ isOpen, onClose, task }) {
+function TaskDetailsModal({ isOpen, onClose, task, members = [] }) {
+  const getAssigneeName = (email) => members.find(m => m.email === email)?.name || email || 'Unassigned';
+
   return (
     <AnimatePresence>
       {isOpen && task && (
@@ -97,7 +99,6 @@ function TaskDetailsModal({ isOpen, onClose, task }) {
             </div>
 
             <div className="p-6 space-y-4">
-              {/* Title */}
               <div>
                 <h4 className="text-lg font-semibold">{task.title}</h4>
                 <div className="text-xs text-gray-400 mt-1">
@@ -105,7 +106,6 @@ function TaskDetailsModal({ isOpen, onClose, task }) {
                 </div>
               </div>
 
-              {/* Status & Priority */}
               <div className="flex flex-wrap gap-2">
                 <span className={`text-xs px-3 py-1 rounded-full ${statusColors[task.status] || 'bg-gray-100'}`}>
                   📌 {statusLabels[task.status] || task.status}
@@ -116,7 +116,6 @@ function TaskDetailsModal({ isOpen, onClose, task }) {
                 </span>
               </div>
 
-              {/* Description */}
               {task.description && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
@@ -124,16 +123,14 @@ function TaskDetailsModal({ isOpen, onClose, task }) {
                 </div>
               )}
 
-              {/* Assignee */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Assignee</label>
                 <div className="flex items-center space-x-2">
                   <FiUser className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-600">{task.assignee || 'Unassigned'}</span>
+                  <span className="text-gray-600">{getAssigneeName(task.assignee)}</span>
                 </div>
               </div>
 
-              {/* Story Points & Due Date */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Story Points</label>
@@ -147,7 +144,6 @@ function TaskDetailsModal({ isOpen, onClose, task }) {
                 </div>
               </div>
 
-              {/* Tags */}
               {task.tags && task.tags.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
@@ -161,7 +157,6 @@ function TaskDetailsModal({ isOpen, onClose, task }) {
                 </div>
               )}
 
-              {/* Close Button */}
               <button
                 onClick={onClose}
                 className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium"
@@ -189,7 +184,7 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, currentUserId, members
     tags: ''
   });
   const [submitting, setSubmitting] = useState(false);
-  const users = members.length > 0 ? members : ['John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Wilson', 'David Brown'];
+  const isCreator = task?.creatorId === currentUserId;
 
   useEffect(() => {
     if (task) {
@@ -268,6 +263,7 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, currentUserId, members
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                   placeholder="Enter task title"
+                  disabled={!isCreator}
                 />
               </div>
 
@@ -280,6 +276,7 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, currentUserId, members
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none transition-all"
                   rows="3"
                   placeholder="Task description (optional)"
+                  disabled={!isCreator}
                 />
               </div>
 
@@ -291,10 +288,11 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, currentUserId, members
                     value={formData.assignee}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                    disabled={!isCreator}
                   >
                     <option value="">Unassigned</option>
-                    {users.map((user) => (
-                      <option key={user} value={user}>{user}</option>
+                    {members.map((user) => (
+                      <option key={user.email} value={user.email}>{user.name}</option>
                     ))}
                   </select>
                 </div>
@@ -306,6 +304,7 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, currentUserId, members
                     value={formData.priority}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                    disabled={!isCreator}
                   >
                     <option value="low">🟢 Low</option>
                     <option value="medium">🟡 Medium</option>
@@ -326,6 +325,7 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, currentUserId, members
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                     placeholder="0"
                     min="0"
+                    disabled={!isCreator}
                   />
                 </div>
 
@@ -337,6 +337,7 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, currentUserId, members
                     value={formData.dueDate}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                    disabled={!isCreator}
                   />
                 </div>
               </div>
@@ -350,6 +351,7 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, currentUserId, members
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                   placeholder="frontend, api, design"
+                  disabled={!isCreator}
                 />
               </div>
 
@@ -363,7 +365,7 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, currentUserId, members
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || !isCreator}
                   className="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50"
                 >
                   {submitting ? 'Updating...' : 'Update Task'}
@@ -467,7 +469,7 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
     tags: ''
   });
 
-  const users = members.length > 0 ? members : ['John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Wilson', 'David Brown'];
+  const getAssigneeName = (email) => members.find(m => m.email === email)?.name || email || 'Unassigned';
 
   useEffect(() => {
     if (projectId) {
@@ -510,7 +512,6 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
         dueDate: '',
         tags: ''
       });
-      // Notify parent to refresh stats
       if (onTaskUpdate) {
         await onTaskUpdate();
       }
@@ -526,7 +527,6 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
       setTasks(tasks.filter(task => task._id !== taskId));
       setShowDeleteTask(false);
       setSelectedTask(null);
-      // Notify parent to refresh stats
       if (onTaskUpdate) {
         await onTaskUpdate();
       }
@@ -540,7 +540,6 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
     setTasks(tasks.map(task => 
       task._id === updatedTask._id ? updatedTask : task
     ));
-    // Notify parent to refresh stats
     if (onTaskUpdate) {
       await onTaskUpdate();
     }
@@ -550,11 +549,10 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
     try {
       await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}`, {
         status: newStatus,
-        requesterId: currentUserId
+        requesterId: currentUserEmail 
       });
       setTasks(tasks.map(task => task._id === taskId ? { ...task, status: newStatus } : task));
-      // Notify parent to refresh stats
-       if (onTaskUpdate) {
+      if (onTaskUpdate) {
         await onTaskUpdate();
       }
     } catch (error) {
@@ -566,12 +564,10 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
     return tasks.filter(task => task.status === status);
   };
 
-  // Check if current user is the creator of the task
   const canEditDelete = (task) => {
     return task.creatorId === currentUserId;
   };
 
-  // Handle task click - show details
   const handleTaskClick = (task) => {
     setSelectedTask(task);
     setShowDetailsTask(true);
@@ -611,7 +607,6 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
 
   return (
     <div className="space-y-6">
-      {/* Toast Notification */}
       <AnimatePresence>
         {toast && (
           <Toast
@@ -622,7 +617,6 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
         )}
       </AnimatePresence>
 
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Task Board</h2>
@@ -637,7 +631,6 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
         </button>
       </div>
 
-      {/* Task Columns */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statusColumns.map((column) => (
           <div key={column.id} className="bg-gray-50 rounded-xl p-4 min-h-[300px]">
@@ -653,6 +646,8 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
               <AnimatePresence>
                 {getTasksByStatus(column.id).map((task) => {
                   const isCreator = canEditDelete(task);
+                  const isAssignee = task.assignee === currentUserEmail;
+                  
                   return (
                     <motion.div
                       key={task._id}
@@ -698,7 +693,6 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
                         </div>
                       </div>
 
-                      {/* Created by indicator */}
                       <div className="text-xs text-gray-400 mt-1">
                         Created by: <span className="font-medium">{task.createdBy || 'Unknown'}</span>
                       </div>
@@ -715,7 +709,7 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
                         {task.assignee && (
                           <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full flex items-center space-x-1">
                             <FiUser className="w-3 h-3" />
-                            <span>{task.assignee}</span>
+                            <span>{getAssigneeName(task.assignee)}</span>
                           </span>
                         )}
                         {task.storyPoints > 0 && (
@@ -731,12 +725,24 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
                         )}
                       </div>
 
-                      {/* Status Change Dropdown */}
+                      {/* Status Change Dropdown - শুধু Assignee পরিবর্তন করতে পারে */}
                       <select
                         value={task.status}
-                        onChange={(e) => handleStatusChange(task._id, e.target.value)}
-                        className="mt-2 w-full text-xs border border-gray-200 rounded px-2 py-1 focus:ring-1 focus:ring-indigo-500 outline-none bg-white"
+                        onChange={(e) => {
+                          if (task.assignee !== currentUserEmail) {
+                            setToast({
+                              message: 'Only the assigned person can change task status!',
+                              type: 'error'
+                            });
+                            return;
+                          }
+                          handleStatusChange(task._id, e.target.value);
+                        }}
+                        className={`mt-2 w-full text-xs border border-gray-200 rounded px-2 py-1 focus:ring-1 focus:ring-indigo-500 outline-none bg-white ${
+                          task.assignee !== currentUserEmail ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
                         onClick={(e) => e.stopPropagation()}
+                        disabled={task.assignee !== currentUserEmail}
                       >
                         {statusColumns.map((col) => (
                           <option key={col.id} value={col.id}>
@@ -820,8 +826,8 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                     >
                       <option value="">Unassigned</option>
-                      {users.map((user) => (
-                        <option key={user} value={user}>{user}</option>
+                      {members.map((user) => (
+                        <option key={user.email} value={user.email}>{user.name}</option>
                       ))}
                     </select>
                   </div>
@@ -897,7 +903,7 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
         )}
       </AnimatePresence>
 
-      {/* Task Details Modal (View Only) */}
+      {/* Task Details Modal */}
       <TaskDetailsModal
         isOpen={showDetailsTask}
         onClose={() => {
@@ -905,6 +911,7 @@ export default function TaskBoard({ projectId, members = [], onTaskUpdate }) {
           setSelectedTask(null);
         }}
         task={selectedTask}
+        members={members}
       />
 
       {/* Edit Task Modal */}
