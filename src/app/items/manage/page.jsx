@@ -6,7 +6,7 @@ import { authClient } from '@/lib/auth-client';
 import Link from 'next/link';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiEdit, FiTrash2, FiEye, FiPlus } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiEye, FiPlus, FiUser } from 'react-icons/fi';
 import EditProjectModal from '@/components/EditProjectModal';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 
@@ -17,6 +17,7 @@ export default function ManageProjects() {
   const [projects, setProjects] = useState([]);
   const [fetchingProjects, setFetchingProjects] = useState(true);
   const [deleting, setDeleting] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
   
   // Edit Modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -30,9 +31,15 @@ export default function ManageProjects() {
     const checkSession = async () => {
       try {
         const { data } = await authClient.getSession();
-        if (!data) { router.push('/login'); return; }
+        if (!data) { 
+          router.push('/login'); 
+          return; 
+        }
         setSession(data);
-        fetchProjects();
+        // Get user ID from session
+        const userId = data?.user?.id || data?.user?._id || data?.userId;
+        setCurrentUserId(userId);
+        fetchProjects(userId);
       } catch (error) {
         console.error('Session check error:', error);
         router.push('/login');
@@ -43,11 +50,12 @@ export default function ManageProjects() {
     checkSession();
   }, [router]);
 
-  const fetchProjects = async () => {
+  const fetchProjects = async (userId) => {
     setFetchingProjects(true);
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/items`);
-      setProjects(response.data.items);
+      // Fetch only projects created by current user
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/items/user/${userId}`);
+      setProjects(response.data);
     } catch (error) {
       console.error('Error fetching projects:', error);
     } finally {
@@ -70,7 +78,7 @@ export default function ManageProjects() {
     setIsDeleteModalOpen(false);
     
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/items/${id}`);
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/items/${id}?userId=${currentUserId}`);
       setProjects(projects.filter(project => project._id !== id));
     } catch (error) {
       console.error('Error deleting project:', error);
@@ -141,6 +149,7 @@ export default function ManageProjects() {
           <div className="bg-white rounded-xl shadow-md p-12 text-center">
             <div className="text-6xl mb-4">🚀</div>
             <p className="text-gray-500 text-lg">No projects found</p>
+            <p className="text-gray-400 text-sm mt-1">You haven't created any projects yet</p>
             <Link href="/items/add" className="inline-block mt-4 text-indigo-600 hover:underline font-medium">
               Create your first project →
             </Link>
@@ -176,12 +185,9 @@ export default function ManageProjects() {
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-3">
-                            <img
-                              src={project.imageUrl || 'https://via.placeholder.com/40/4F46E5/FFFFFF?text=AI'}
-                              alt={project.title}
-                              className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
-                              onError={(e) => { e.target.src = 'https://via.placeholder.com/40/4F46E5/FFFFFF?text=AI'; }}
-                            />
+                            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                              {project.title?.charAt(0).toUpperCase() || 'P'}
+                            </div>
                             <div className="min-w-0">
                               <div className="font-medium text-gray-900 truncate">{project.title}</div>
                               <div className="text-sm text-gray-500 truncate max-w-xs hidden sm:block">{project.shortDescription}</div>
@@ -247,6 +253,7 @@ export default function ManageProjects() {
         onClose={handleEditModalClose}
         project={editingProject}
         onUpdate={handleProjectUpdate}
+        currentUserId={currentUserId}
       />
 
       {/* Delete Confirmation Modal */}

@@ -114,9 +114,11 @@ export default function AddProject() {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const userId = session?.user?.id || session?.user?._id;
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/items`, {
         ...formData,
         members,
+         createdBy: userId, 
         price: formData.storyPoints,
         category: formData.framework,
         location: formData.teamSize,
