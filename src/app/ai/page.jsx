@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiCpu, FiSend, FiRefreshCw, FiZap, FiLayers, FiClock } from 'react-icons/fi';
+import { FiCpu, FiSend, FiRefreshCw, FiZap, FiLayers, FiClock, FiFilter, FiClock as FiHistory } from 'react-icons/fi';
 
 const priorityColor = {
   High: 'bg-red-100 text-red-700',
@@ -35,6 +35,13 @@ export default function AIPage() {
   const [story, setStory] = useState(null);
   const [generatingStory, setGeneratingStory] = useState(false);
 
+  // --- new: recommendation engine state ---
+  const [history, setHistory] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [feedback, setFeedback] = useState('');
+  const [refining, setRefining] = useState(false);
+
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -44,6 +51,7 @@ export default function AIPage() {
           return;
         }
         setSession(data);
+        fetchHistory(data.user.id);
       } catch (error) {
         console.error('Session check error:', error);
         router.push('/login');
@@ -53,6 +61,16 @@ export default function AIPage() {
     };
     checkSession();
   }, [router]);
+
+  const fetchHistory = async (userId) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/story-history/${userId}`);
+      const data = await res.json();
+      setHistory(data);
+    } catch (error) {
+      console.error('Error fetching history:', error);
+    }
+  };
 
   const handleGenerateContent = async () => {
     if (!topic) return;
@@ -73,22 +91,57 @@ export default function AIPage() {
   };
 
   const handleGenerateStory = async () => {
-    if (!featureRequest) return;
+    if (!featureRequest || !session) return;
     setGeneratingStory(true);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/generate-story`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ featureRequest }),
+        body: JSON.stringify({ featureRequest, userId: session.user.id }),
       });
       const data = await response.json();
       setStory(data);
+      setCategoryFilter('all');
+      setPriorityFilter('all');
+      fetchHistory(session.user.id);
     } catch (error) {
       console.error('Error generating story:', error);
     } finally {
       setGeneratingStory(false);
     }
   };
+
+  const handleRefineStory = async () => {
+    if (!feedback || !story) return;
+    setRefining(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/refine-story`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ featureRequest, previousStory: story, feedback }),
+      });
+      const data = await response.json();
+      setStory(data);
+      setFeedback('');
+    } catch (error) {
+      console.error('Error refining story:', error);
+    } finally {
+      setRefining(false);
+    }
+  };
+
+  const loadFromHistory = (item) => {
+    setFeatureRequest(item.featureRequest);
+    setStory(item.story);
+    setCategoryFilter('all');
+    setPriorityFilter('all');
+  };
+
+  const filteredTasks = story?.tasks?.filter((task) => {
+    const catOk = categoryFilter === 'all' || task.category === categoryFilter;
+    const prioOk = priorityFilter === 'all' || task.priority === priorityFilter;
+    return catOk && prioOk;
+  }) || [];
 
   if (loading) {
     return (
@@ -222,7 +275,7 @@ export default function AIPage() {
             </motion.div>
           )}
 
-          {/* Story Generator */}
+          {/* Story Generator (now: AI Recommendation Engine) */}
           {activeTab === 'story' && (
             <motion.div
               key="story"
@@ -230,89 +283,169 @@ export default function AIPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.25 }}
-              className="bg-white rounded-xl shadow-md p-6 max-w-3xl mx-auto"
+              className="max-w-3xl mx-auto space-y-4"
             >
-              <h2 className="text-xl font-semibold mb-1">AI Agile Story Generator</h2>
-              <p className="text-sm text-gray-500 mb-4">
-                Type a feature request in one line. AI writes the user story and breaks it into tagged, prioritized tasks.
-              </p>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Feature Request</label>
-                  <input
-                    type="text"
-                    value={featureRequest}
-                    onChange={(e) => setFeatureRequest(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleGenerateStory()}
-                    placeholder="e.g. Google Login feature banaite hবে"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                  />
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <h2 className="text-xl font-semibold mb-1">AI Agile Story & Task Recommender</h2>
+                <p className="text-sm text-gray-500 mb-4">
+                  Type a feature request. AI writes the user story, breaks it into tagged, prioritized tasks,
+                  and learns from your past requests + feedback.
+                </p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Feature Request</label>
+                    <input
+                      type="text"
+                      value={featureRequest}
+                      onChange={(e) => setFeatureRequest(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleGenerateStory()}
+                      placeholder="e.g. Google Login feature banaite hobe"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleGenerateStory}
+                    disabled={!featureRequest || generatingStory}
+                    className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+                  >
+                    {generatingStory ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        <span>Breaking down feature...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FiLayers className="w-5 h-5" />
+                        <span>Generate Story & Tasks</span>
+                      </>
+                    )}
+                  </motion.button>
                 </div>
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleGenerateStory}
-                  disabled={!featureRequest || generatingStory}
-                  className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
-                >
-                  {generatingStory ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      <span>Breaking down feature...</span>
-                    </>
-                  ) : (
-                    <>
-                      <FiLayers className="w-5 h-5" />
-                      <span>Generate Story & Tasks</span>
-                    </>
+
+                <AnimatePresence>
+                  {story && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-6 overflow-hidden"
+                    >
+                      <div className="p-4 bg-violet-50 rounded-lg mb-4">
+                        <span className="text-xs font-semibold text-violet-600 uppercase tracking-wide">User Story</span>
+                        <p className="text-gray-800 mt-1">{story.userStory}</p>
+                      </div>
+
+                      {/* Filters */}
+                      <div className="flex items-center gap-2 mb-3 flex-wrap">
+                        <FiFilter className="w-4 h-4 text-gray-400" />
+                        <select
+                          value={categoryFilter}
+                          onChange={(e) => setCategoryFilter(e.target.value)}
+                          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm outline-none"
+                        >
+                          <option value="all">All Categories</option>
+                          {Object.keys(categoryColor).map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={priorityFilter}
+                          onChange={(e) => setPriorityFilter(e.target.value)}
+                          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm outline-none"
+                        >
+                          <option value="all">All Priorities</option>
+                          <option value="High">High</option>
+                          <option value="Medium">Medium</option>
+                          <option value="Low">Low</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                          Task Breakdown ({filteredTasks.length})
+                        </span>
+                        {filteredTasks.map((task, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.08 }}
+                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                          >
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-800">{task.title}</p>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${categoryColor[task.category] || 'bg-gray-100 text-gray-700'}`}>
+                                  {task.category}
+                                </span>
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${priorityColor[task.priority] || 'bg-gray-100 text-gray-700'}`}>
+                                  {task.priority}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-1 text-gray-500 text-sm flex-shrink-0 ml-3">
+                              <FiClock className="w-4 h-4" />
+                              <span>{task.estimatedHours}h</span>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+
+                      {/* Refine box */}
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Not quite right? Give feedback to refine
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={feedback}
+                            onChange={(e) => setFeedback(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleRefineStory()}
+                            placeholder="e.g. add more testing tasks, reduce hours"
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                          />
+                          <button
+                            onClick={handleRefineStory}
+                            disabled={!feedback || refining}
+                            className="px-4 py-2 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 disabled:opacity-50 flex items-center gap-1"
+                          >
+                            {refining ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            ) : (
+                              <FiRefreshCw className="w-4 h-4" />
+                            )}
+                            Refine
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
                   )}
-                </motion.button>
+                </AnimatePresence>
               </div>
 
-              <AnimatePresence>
-                {story && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mt-6 overflow-hidden"
-                  >
-                    <div className="p-4 bg-violet-50 rounded-lg mb-4">
-                      <span className="text-xs font-semibold text-violet-600 uppercase tracking-wide">User Story</span>
-                      <p className="text-gray-800 mt-1">{story.userStory}</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Task Breakdown</span>
-                      {story.tasks?.map((task, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.08 }}
-                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                        >
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-800">{task.title}</p>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${categoryColor[task.category] || 'bg-gray-100 text-gray-700'}`}>
-                                {task.category}
-                              </span>
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${priorityColor[task.priority] || 'bg-gray-100 text-gray-700'}`}>
-                                {task.priority}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-1 text-gray-500 text-sm flex-shrink-0 ml-3">
-                            <FiClock className="w-4 h-4" />
-                            <span>{task.estimatedHours}h</span>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {/* History (context-aware recommendations) */}
+              {history.length > 0 && (
+                <div className="bg-white rounded-xl shadow-md p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <FiHistory className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm font-semibold text-gray-700">Your Past Requests</span>
+                  </div>
+                  <div className="space-y-2">
+                    {history.map((item) => (
+                      <button
+                        key={item._id}
+                        onClick={() => loadFromHistory(item)}
+                        className="w-full text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm text-gray-700 transition-colors"
+                      >
+                        {item.featureRequest}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
