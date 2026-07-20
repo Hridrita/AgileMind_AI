@@ -1,4 +1,4 @@
-#  AgileMind AI — Frontend
+#  AgileMind AI
 
 **AgileMind AI** is an AI-powered Agile project management platform that combines intelligent automation with modern project management workflows. Built with Next.js 16 and React 19, it provides a seamless experience for managing projects, tasks, and sprints with AI assistance.
 
