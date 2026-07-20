@@ -32,6 +32,7 @@ export default function ProjectDetails() {
     done: 0,
     progress: 0,
   });
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const fetchTaskStats = useCallback(async () => {
     try {
@@ -92,8 +93,9 @@ export default function ProjectDetails() {
   }, [params.id, fetchProjectDetails]);
 
   const handleTaskUpdate = useCallback(async () => {
-    await fetchTaskStats();
-  }, [fetchTaskStats]);
+  await fetchTaskStats();
+  setRefreshKey((prev) => prev + 1);
+}, [fetchTaskStats]);
 
   if (loading) {
     return (
@@ -380,11 +382,11 @@ export default function ProjectDetails() {
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <SprintBurndownChart projectId={params.id} />
-          <TaskDistributionChart projectId={params.id} />
+          <SprintBurndownChart projectId={params.id} refreshTrigger={refreshKey} />
+          <TaskDistributionChart projectId={params.id} refreshTrigger={refreshKey} />
         </div>
         <div className="mb-8">
-          <TeamVelocityChart projectId={params.id} />
+          <TeamVelocityChart projectId={params.id} refreshTrigger={refreshKey} />
         </div>
 
         {/* Task Board Section */}

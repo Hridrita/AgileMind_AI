@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -15,14 +13,13 @@ import {
 } from 'recharts';
 import api from '@/lib/axios';
 
-export default function SprintBurndownChart({ projectId }) {
+export default function SprintBurndownChart({ projectId, refreshTrigger }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchBurndownData = async () => {
       try {
-        // Tasks API থেকে ডেটা আনা
         const tasksRes = await api.get(
           `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/tasks`,
           {
@@ -32,15 +29,12 @@ export default function SprintBurndownChart({ projectId }) {
         );
         const tasks = tasksRes.data;
 
-       
         const sprintDays = 8;
         const totalStoryPoints = tasks.reduce((sum, t) => sum + (t.storyPoints || 0), 0);
-        
-        // Daily progress calculation
+
         const dailyData = [];
         let completedPoints = 0;
-        
-        
+
         const tasksByDay = {};
         tasks.forEach(task => {
           if (task.status === 'done' && task.updatedAt) {
@@ -52,12 +46,11 @@ export default function SprintBurndownChart({ projectId }) {
           }
         });
 
-        // Generate chart data
         for (let day = 0; day <= sprintDays; day++) {
           const ideal = Math.max(0, totalStoryPoints - (totalStoryPoints / sprintDays) * day);
           completedPoints += (tasksByDay[day] || 0);
           const actual = Math.max(0, totalStoryPoints - completedPoints);
-          
+
           dailyData.push({
             day: `Day ${day}`,
             ideal: Math.round(ideal),
@@ -68,7 +61,6 @@ export default function SprintBurndownChart({ projectId }) {
         setData(dailyData);
       } catch (error) {
         console.error('Error fetching burndown data:', error);
-        // Fallback mock data
         setData([
           { day: 'Day 1', ideal: 21, actual: 21 },
           { day: 'Day 2', ideal: 18, actual: 19 },
@@ -87,7 +79,7 @@ export default function SprintBurndownChart({ projectId }) {
     if (projectId) {
       fetchBurndownData();
     }
-  }, [projectId]);
+  }, [projectId, refreshTrigger]);
 
   if (loading) {
     return (
@@ -125,22 +117,8 @@ export default function SprintBurndownChart({ projectId }) {
               }}
             />
             <Legend />
-            <Area
-              type="monotone"
-              dataKey="ideal"
-              stroke="#4F46E5"
-              strokeWidth={2}
-              fill="url(#idealGradient)"
-              name="Ideal Burndown"
-            />
-            <Area
-              type="monotone"
-              dataKey="actual"
-              stroke="#EC4899"
-              strokeWidth={2}
-              fill="url(#actualGradient)"
-              name="Actual Progress"
-            />
+            <Area type="monotone" dataKey="ideal" stroke="#4F46E5" strokeWidth={2} fill="url(#idealGradient)" name="Ideal Burndown" />
+            <Area type="monotone" dataKey="actual" stroke="#EC4899" strokeWidth={2} fill="url(#actualGradient)" name="Actual Progress" />
           </AreaChart>
         </ResponsiveContainer>
       </div>

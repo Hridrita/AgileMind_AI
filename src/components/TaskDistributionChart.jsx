@@ -6,7 +6,7 @@ import api from '@/lib/axios';
 
 const COLORS = ['#4F46E5', '#7C3AED', '#EC4899', '#F59E0B', '#10B981', '#3B82F6'];
 
-export default function TaskDistributionChart({ projectId }) {
+export default function TaskDistributionChart({ projectId, refreshTrigger }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,7 +22,6 @@ export default function TaskDistributionChart({ projectId }) {
         );
         const tasks = tasksRes.data;
 
-        // Status wise task count
         const statusCount = {};
         tasks.forEach(task => {
           const status = task.status || 'todo';
@@ -36,7 +35,7 @@ export default function TaskDistributionChart({ projectId }) {
           'done': 'Done'
         };
 
-        const chartData = Object.keys(statusCount).map((key, index) => ({
+        const chartData = Object.keys(statusCount).map((key) => ({
           name: statusLabels[key] || key,
           value: statusCount[key],
         }));
@@ -63,7 +62,7 @@ export default function TaskDistributionChart({ projectId }) {
     if (projectId) {
       fetchTaskDistribution();
     }
-  }, [projectId]);
+  }, [projectId, refreshTrigger]);
 
   if (loading) {
     return (

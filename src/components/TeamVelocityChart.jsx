@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import api from '@/lib/axios';
 
-export default function TeamVelocityChart({ projectId }) {
+export default function TeamVelocityChart({ projectId, refreshTrigger }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,7 +29,6 @@ export default function TeamVelocityChart({ projectId }) {
         );
         const tasks = tasksRes.data;
 
-        // Group tasks by sprint using year-month (chronological + no year clash)
         const sprints = {};
         tasks.forEach(task => {
           const date = new Date(task.createdAt);
@@ -75,7 +74,7 @@ export default function TeamVelocityChart({ projectId }) {
     if (projectId) {
       fetchVelocityData();
     }
-  }, [projectId]);
+  }, [projectId, refreshTrigger]);
 
   if (loading) {
     return (
