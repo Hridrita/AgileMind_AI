@@ -16,6 +16,9 @@ import {
   FiAward,
 } from "react-icons/fi";
 import TaskBoard from "@/components/TaskBoard";
+import SprintBurndownChart from "@/components/SprintBurndownChart";
+import TaskDistributionChart from "@/components/TaskDistributionChart";
+import TeamVelocityChart from "@/components/TeamVelocityChart";
 import api from "@/lib/axios";
 
 export default function ProjectDetails() {
@@ -374,6 +377,15 @@ export default function ProjectDetails() {
             )}
           </div>
         </motion.div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <SprintBurndownChart projectId={params.id} />
+          <TaskDistributionChart projectId={params.id} />
+        </div>
+        <div className="mb-8">
+          <TeamVelocityChart projectId={params.id} />
+        </div>
 
         {/* Task Board Section */}
         <TaskBoard 

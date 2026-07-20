@@ -35,6 +35,7 @@ export default function Login() {
       router.push("/");
       router.refresh();
     } catch (err) {
+      console.error("SignUp error:", err);
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);
