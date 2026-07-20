@@ -32,7 +32,7 @@ export default function SprintBurndownChart({ projectId }) {
         );
         const tasks = tasksRes.data;
 
-        // Sprint duration (ডিফল্ট 8 দিন ধরা হয়েছে)
+       
         const sprintDays = 8;
         const totalStoryPoints = tasks.reduce((sum, t) => sum + (t.storyPoints || 0), 0);
         
@@ -40,7 +40,7 @@ export default function SprintBurndownChart({ projectId }) {
         const dailyData = [];
         let completedPoints = 0;
         
-        // প্রতিদিন কত পয়েন্ট কমপ্লিট হয়েছে
+        
         const tasksByDay = {};
         tasks.forEach(task => {
           if (task.status === 'done' && task.updatedAt) {
@@ -53,7 +53,7 @@ export default function SprintBurndownChart({ projectId }) {
         });
 
         // Generate chart data
-        for (let day = 1; day <= sprintDays; day++) {
+        for (let day = 0; day <= sprintDays; day++) {
           const ideal = Math.max(0, totalStoryPoints - (totalStoryPoints / sprintDays) * day);
           completedPoints += (tasksByDay[day] || 0);
           const actual = Math.max(0, totalStoryPoints - completedPoints);

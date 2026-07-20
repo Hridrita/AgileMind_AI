@@ -29,11 +29,11 @@ export default function TeamVelocityChart({ projectId }) {
         );
         const tasks = tasksRes.data;
 
-        // Group tasks by sprint (using createdAt as reference)
+        // Group tasks by sprint using year-month (chronological + no year clash)
         const sprints = {};
         tasks.forEach(task => {
           const date = new Date(task.createdAt);
-          const sprintKey = `Sprint ${date.getMonth() + 1}`; // Simple grouping
+          const sprintKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
           if (!sprints[sprintKey]) {
             sprints[sprintKey] = { planned: 0, completed: 0 };
           }
@@ -43,11 +43,13 @@ export default function TeamVelocityChart({ projectId }) {
           }
         });
 
-        const chartData = Object.keys(sprints).map((key) => ({
-          sprint: key,
-          planned: Math.round(sprints[key].planned),
-          completed: Math.round(sprints[key].completed),
-        }));
+        const chartData = Object.keys(sprints)
+          .sort()
+          .map((key) => ({
+            sprint: key,
+            planned: Math.round(sprints[key].planned),
+            completed: Math.round(sprints[key].completed),
+          }));
 
         setData(chartData.length > 0 ? chartData : [
           { sprint: 'Sprint 1', completed: 21, planned: 21 },
