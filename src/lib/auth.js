@@ -8,6 +8,9 @@ const db = client.db("AgileMind_AI");
 
 export const auth = betterAuth({
   database: mongodbAdapter(db),
+  baseURL: process.env.BETTER_AUTH_URL,
+  secret: process.env.BETTER_AUTH_SECRET,
+  trustedOrigins: [process.env.BETTER_AUTH_URL],
   emailAndPassword: {
     enabled: true
   },
